@@ -1,0 +1,62 @@
+name: ArcaneCore
+version: 1.0
+main: me.aydeejay.arcanecore.ArcaneCore
+api-version: '1.21'
+author: Aydeejay
+
+commands:
+  arcane:
+    description: Opens your Arcane GUI
+    usage: /arcane
+  givebreeze:
+      description: Gives you the Breeze Arcane
+      permission: arcanecore.admin
+      permission-message: You do not have permission to use this command.
+  setarcanelevel:
+    description: Sets a player's Arcane level
+    permission: arcanecore.admin
+    permission-message: You do not have permission to use this command.
+  giveluck:
+    description: Gives you the Luck Arcane
+    permission: arcanecore.admin
+    permission-message: You do not have permission to use this command.
+  trust:
+    description: Trust a player
+  untrust:
+    description: Untrust a player
+  trustlist:
+    description: Shows your trusted players
+  givefrost:
+      description: Gives the Frost Arcane
+      usage: /givefrost
+      permission: arcanecore.admin
+      permission-message: You do not have permission to use this command.
+  giveember:
+    description: Gives the Ember Arcane
+    usage: /giveember
+    permission: arcanecore.admin
+    permission-message: You do not have permission to use this command.
+  ability:
+    description: Changes your Arcane ability trigger
+    usage: /ability <sneakrightclick|swap>
+  levelitem:
+    description: Gives a Level Item
+    usage: /levelitem
+    permission: arcanecore.admin
+    permission-message: You do not have permission to use this command.
+  __arcane_internal_ability:
+    description: Internal Arcane ability trigger
+    usage: /__arcane_internal_ability
+  givevoid:
+    description: Gives the Void Arcane
+    usage: /givevoid
+    permission: arcanecore.admin
+    permission-message: You do not have permission to use this command.
+  givetrader:
+    description: Gives a Trader item
+    usage: /givetrader
+    permission: arcanecore.admin
+    permission-message: You do not have permission to use this command.
+  withdrawlevel:
+    description: Withdraw one level
+    usage: /withdrawlevel
