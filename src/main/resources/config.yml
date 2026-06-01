@@ -1,7 +1,10 @@
+# ArcaneCore configuration.
+# Player data (levels, trusts, owned arcanes) is stored separately in
+# levels.yml / trusts.yml / arcanes.yml and is NOT kept in this file.
+
 levels:
   max-level: 4
   ability-unlock-level: 3
-  uuid-here: 0
 
 breeze:
   cooldown-seconds: 25
@@ -9,7 +12,7 @@ breeze:
     level-3: 8.0
     level-4: 13.0
   dash-damage: 4.0
-  hit-radius: 4.0
+  hit-radius: 2.8
   damage-window-ticks: 30
 
 luck:
@@ -21,12 +24,15 @@ luck:
 
 frost:
   cooldown-seconds: 75
+  radius:
+    level-3: 5
+    level-4: 10
   freeze-duration:
     level-3: 3
     level-4: 3
   total-damage:
     level-3: 0.0
-    level-4: 0.0
+    level-4: 4.0
 
 ember:
   cooldown-seconds: 120
@@ -36,23 +42,25 @@ ember:
     level-3: 80
     level-4: 120
   damage:
-    level-3: 6.0
-    level-4: 8.0
+    level-3: 8.0
+    level-4: 10.0
 
 void:
   passive:
-    extra-hearts: 4
+    extra-hearts: 5
+  flight:
+    launch-strength: 1.6
+    fly-speed: 0.22
+    duration-seconds: 3
+    cooldown-seconds: 30
+  breath:
+    duration-ticks: 60
+    total-damage: 12.0
+    range: 10
+    max-width: 6.0
+    cooldown-seconds: 60
 
 trader-chances:
-  breeze: 25
-  frost: 25
-  ember: 25
-  luck: 25
-
-kill-effects:
-  enabled: true
-  breeze: true
-  frost: true
-  ember: true
-  luck: true
-  void: true
+  breeze: 34
+  frost: 33
+  ember: 33

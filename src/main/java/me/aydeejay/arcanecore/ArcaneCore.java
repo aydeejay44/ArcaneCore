@@ -1,37 +1,59 @@
 package me.aydeejay.arcanecore;
 
-import me.aydeejay.arcanecore.listeners.PlayerListener;
-import org.bukkit.plugin.java.JavaPlugin;
-import me.aydeejay.arcanecore.listeners.BreezeListener;
-import me.aydeejay.arcanecore.listeners.LevelItemListener;
-import me.aydeejay.arcanecore.items.LevelItem;
-import me.aydeejay.arcanecore.listeners.LuckListener;
-import me.aydeejay.arcanecore.listeners.TrustListener;
-import me.aydeejay.arcanecore.listeners.TrustVisualListener;
-import me.aydeejay.arcanecore.listeners.FrostListener;
-import me.aydeejay.arcanecore.ArcaneManager;
-import me.aydeejay.arcanecore.listeners.EmberListener;
-import me.aydeejay.arcanecore.listeners.AbilitySwapListener;
-import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
-import org.bukkit.inventory.ShapedRecipe;
 import me.aydeejay.arcanecore.arcanes.VoidArcane;
-import org.bukkit.inventory.ShapelessRecipe;
-import me.aydeejay.arcanecore.listeners.VoidListener;
-import me.aydeejay.arcanecore.listeners.AbilitySlotListener;
-import me.aydeejay.arcanecore.commands.VoidArcaneCommand;
-import me.aydeejay.arcanecore.listeners.TraderListener;
+import me.aydeejay.arcanecore.commands.AbilityCommand;
+import me.aydeejay.arcanecore.commands.ArcaneAbilityCommand;
+import me.aydeejay.arcanecore.commands.ArcaneLevelCommand;
+import me.aydeejay.arcanecore.commands.GiveBreezeCommand;
+import me.aydeejay.arcanecore.commands.GiveEmberCommand;
+import me.aydeejay.arcanecore.commands.GiveFrostCommand;
+import me.aydeejay.arcanecore.commands.GiveHasteLeggingsCommand;
+import me.aydeejay.arcanecore.commands.GiveHeartHelmetCommand;
+import me.aydeejay.arcanecore.commands.GiveLuckCommand;
+import me.aydeejay.arcanecore.commands.GiveResistanceChestplateCommand;
+import me.aydeejay.arcanecore.commands.GiveSpeedBootsCommand;
+import me.aydeejay.arcanecore.commands.GiveStrengthAxeCommand;
+import me.aydeejay.arcanecore.commands.LevelItemCommand;
+import me.aydeejay.arcanecore.commands.SetArcaneLevelCommand;
 import me.aydeejay.arcanecore.commands.TraderCommand;
+import me.aydeejay.arcanecore.commands.TrustCommand;
+import me.aydeejay.arcanecore.commands.TrustListCommand;
+import me.aydeejay.arcanecore.commands.UntrustCommand;
+import me.aydeejay.arcanecore.commands.VoidArcaneCommand;
+import me.aydeejay.arcanecore.items.LevelItem;
 import me.aydeejay.arcanecore.items.TraderItem;
-import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.ShapedRecipe;
-import org.bukkit.Bukkit;
+import me.aydeejay.arcanecore.listeners.AbilitySlotListener;
+import me.aydeejay.arcanecore.listeners.AbilitySwapListener;
 import me.aydeejay.arcanecore.listeners.ArcaneGuiListener;
 import me.aydeejay.arcanecore.listeners.ArcaneKillEffectListener;
+import me.aydeejay.arcanecore.listeners.BonusHealthListener;
+import me.aydeejay.arcanecore.listeners.BreezeListener;
+import me.aydeejay.arcanecore.listeners.CustomArmorListener;
+import me.aydeejay.arcanecore.listeners.EmberListener;
+import me.aydeejay.arcanecore.listeners.FrostListener;
+import me.aydeejay.arcanecore.listeners.LevelItemListener;
 import me.aydeejay.arcanecore.listeners.LevelZeroListener;
+import me.aydeejay.arcanecore.listeners.LuckListener;
 import me.aydeejay.arcanecore.listeners.MaceCooldownListener;
+import me.aydeejay.arcanecore.listeners.NetheriteCraftBlockListener;
+import me.aydeejay.arcanecore.listeners.PlayerListener;
+import me.aydeejay.arcanecore.listeners.StrengthAxeListener;
+import me.aydeejay.arcanecore.listeners.TraderListener;
+import me.aydeejay.arcanecore.listeners.TrustListener;
+import me.aydeejay.arcanecore.listeners.TrustVisualListener;
+import me.aydeejay.arcanecore.listeners.VoidListener;
+import org.bukkit.Bukkit;
+import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.PluginCommand;
+import org.bukkit.event.Listener;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.Recipe;
+import org.bukkit.inventory.RecipeChoice;
+import org.bukkit.inventory.ShapedRecipe;
+import org.bukkit.inventory.ShapelessRecipe;
+import org.bukkit.plugin.java.JavaPlugin;
 
 public class ArcaneCore extends JavaPlugin {
 
@@ -42,77 +64,47 @@ public class ArcaneCore extends JavaPlugin {
     private AbilityTriggerManager abilityTriggerManager;
     private PlayerArcaneManager playerArcaneManager;
 
+    // Single registered listener instances. Ability triggers (slot / swap /
+    // plugin-message paths) reuse these so shared state (dash tracking,
+    // cooldowns) lives in one place instead of throwaway copies.
+    private BreezeListener breezeListener;
+    private FrostListener frostListener;
+    private EmberListener emberListener;
+    private LuckListener luckListener;
+    private VoidListener voidListener;
+    private BonusHealthListener bonusHealthListener;
+    private TrustVisualListener trustVisualListener;
+
     @Override
     public void onEnable() {
         saveDefaultConfig();
 
         trustManager = new TrustManager(this);
-        trustManager.loadTrusts();
+        trustManager.load();
         levelManager = new LevelManager(this);
-        levelManager.loadLevels();
+        levelManager.load();
         cooldownManager = new CooldownManager(this);
         arcaneManager = new ArcaneManager();
-        abilityTriggerManager = new AbilityTriggerManager();
+        abilityTriggerManager = new AbilityTriggerManager(this);
         playerArcaneManager = new PlayerArcaneManager(this);
 
-        TrustVisualListener trustVisualListener = new TrustVisualListener(this);
-        trustVisualListener.startVisualTask();
+        // Ability listeners first so the plugin-message channel can reuse them.
+        breezeListener = new BreezeListener(this);
+        frostListener = new FrostListener(this);
+        emberListener = new EmberListener(this);
+        luckListener = new LuckListener(this);
+        voidListener = new VoidListener(this);
 
-        getServer().getPluginManager().registerEvents(new MaceCooldownListener(), this);
-
-        getServer().getPluginManager().registerEvents(new LevelZeroListener(this), this);
-
-        getServer().getPluginManager().registerEvents(
-                new TrustListener(this),
-                this
-        );
-
-        getServer().getPluginManager().registerEvents(
-                new PlayerListener(this),
-                this
-        );
-
-        getServer().getPluginManager().registerEvents(
-                new BreezeListener(this),
-                this
-        );
-
-        getServer().getPluginManager().registerEvents(
-                new LevelItemListener(this),
-                this
-        );
-
-        FrostListener frostListener = new FrostListener(this);
-
-        getServer().getPluginManager().registerEvents(
-                frostListener,
-                this
-        );
+        register(breezeListener);
+        register(frostListener);
+        register(emberListener);
+        register(luckListener);
+        register(voidListener);
 
         frostListener.startPassiveTask();
-
-        LuckListener luckListener = new LuckListener(this);
-
-        getServer().getPluginManager().registerEvents(
-                luckListener,
-                this
-        );
-
         luckListener.startPassiveTask();
-
-        EmberListener emberListener = new EmberListener(this);
-
-        getServer().getPluginManager().registerEvents(
-                emberListener,
-                this
-        );
-
         emberListener.startPassiveTask();
-
-        getServer().getPluginManager().registerEvents(
-                new AbilitySwapListener(this),
-                this
-        );
+        voidListener.startPassiveTask();
 
         getServer().getMessenger().registerIncomingPluginChannel(
                 this,
@@ -120,186 +112,147 @@ public class ArcaneCore extends JavaPlugin {
                 new AbilityPluginMessageListener(this)
         );
 
-        VoidListener voidListener = new VoidListener(this);
+        bonusHealthListener = new BonusHealthListener(this);
+        register(bonusHealthListener);
+        register(new StrengthAxeListener(this));
+        register(new CustomArmorListener(this));
+        register(new NetheriteCraftBlockListener());
+        register(new LevelZeroListener(this));
+        register(new TrustListener(this));
+        register(new PlayerListener(this));
+        register(new LevelItemListener(this));
+        register(new AbilitySwapListener(this));
+        register(new AbilitySlotListener(this));
+        register(new ArcaneGuiListener(this));
+        register(new ArcaneKillEffectListener(this));
+        register(new TraderListener(this));
+        register(new MaceCooldownListener());
 
-        getServer().getPluginManager().registerEvents(
-                voidListener,
-                this
-        );
+        trustVisualListener = new TrustVisualListener(this);
+        register(trustVisualListener);
+        trustVisualListener.startVisualTask();
 
-        voidListener.startPassiveTask();
+        registerRecipes();
+        registerCommands();
 
-        getServer().getPluginManager().registerEvents(
-                new AbilitySlotListener(this),
-                this
-        );
+        getLogger().info("ArcaneCore enabled!");
+    }
 
-        NamespacedKey key = new NamespacedKey(this, "arcane_level_item");
+    @Override
+    public void onDisable() {
+        if (voidListener != null) {
+            voidListener.shutdown();
+        }
+        if (bonusHealthListener != null) {
+            bonusHealthListener.shutdown();
+        }
+        if (trustVisualListener != null) {
+            trustVisualListener.shutdown();
+        }
+        trustManager.save();
+        levelManager.save();
+        abilityTriggerManager.save();
+        playerArcaneManager.save();
+        getLogger().info("ArcaneCore disabled!");
+    }
 
-        getServer().getPluginManager().registerEvents(
-                new TraderListener(this),
-                this
-        );
+    private void register(Listener listener) {
+        getServer().getPluginManager().registerEvents(listener, this);
+    }
 
-        ShapedRecipe recipe = new ShapedRecipe(key, LevelItem.createItem());
-        recipe.shape(
-                "DSD",
-                "NKN",
-                "DSD"
-        );
+    private void registerCommands() {
+        cmd("arcane", new ArcaneLevelCommand(this));
+        cmd("givebreeze", new GiveBreezeCommand(this));
+        cmd("giveluck", new GiveLuckCommand(this));
+        cmd("givefrost", new GiveFrostCommand(this));
+        cmd("giveember", new GiveEmberCommand(this));
+        cmd("givevoid", new VoidArcaneCommand(this));
+        cmd("trust", new TrustCommand(this));
+        cmd("untrust", new UntrustCommand(this));
+        cmd("trustlist", new TrustListCommand(this));
+        cmd("levelitem", new LevelItemCommand());
+        cmd("__arcane_internal_ability", new ArcaneAbilityCommand(this));
+        cmd("givetrader", new TraderCommand());
+        cmd("withdrawlevel", new AbilityCommand(this));
+        cmd("ability", new AbilityCommand(this));
+        cmd("setarcanelevel", new SetArcaneLevelCommand(this));
+        cmd("givestrengthaxe", new GiveStrengthAxeCommand());
+        cmd("givehearthelmet", new GiveHeartHelmetCommand());
+        cmd("giveresistancechestplate", new GiveResistanceChestplateCommand());
+        cmd("givehasteleggings", new GiveHasteLeggingsCommand());
+        cmd("givespeedboots", new GiveSpeedBootsCommand());
+    }
 
-        recipe.setIngredient('D', Material.DIAMOND_BLOCK);
-        recipe.setIngredient('S', Material.NETHER_STAR);
-        recipe.setIngredient('N', Material.NETHERITE_INGOT);
-        recipe.setIngredient('K', Material.OMINOUS_TRIAL_KEY);
+    private void cmd(String name, CommandExecutor executor) {
+        PluginCommand command = getCommand(name);
+        if (command == null) {
+            getLogger().warning("Command '" + name + "' is missing from plugin.yml; skipping registration.");
+            return;
+        }
+        command.setExecutor(executor);
+    }
 
-        getServer().addRecipe(recipe);
+    private void registerRecipes() {
+        ShapedRecipe levelRecipe = new ShapedRecipe(key("arcane_level_item"), LevelItem.createItem());
+        levelRecipe.shape("DSD", "NKN", "DSD");
+        levelRecipe.setIngredient('D', Material.DIAMOND_BLOCK);
+        levelRecipe.setIngredient('S', Material.NETHER_STAR);
+        levelRecipe.setIngredient('N', Material.NETHERITE_INGOT);
+        levelRecipe.setIngredient('K', Material.OMINOUS_TRIAL_KEY);
+        addRecipe(levelRecipe, "arcane_level_item");
 
-        ShapelessRecipe voidRecipe = new ShapelessRecipe(
-                new NamespacedKey(this, "void_arcane"),
-                VoidArcane.createItem()
-        );
-
+        ShapelessRecipe voidRecipe = new ShapelessRecipe(key("void_arcane"), VoidArcane.createItem());
         voidRecipe.addIngredient(Material.DRAGON_EGG);
+        addRecipe(voidRecipe, "void_arcane");
 
-        getServer().addRecipe(voidRecipe);
-
-        getServer().removeRecipe(new NamespacedKey(this, "trader"));
-
-        ShapedRecipe traderRecipe = new ShapedRecipe(
-                new NamespacedKey(this, "trader"),
-                TraderItem.createItem()
-        );
-
-        traderRecipe.shape(
-                "DGN",
-                "EKE",
-                "NGD"
-        );
-
+        ShapedRecipe traderRecipe = new ShapedRecipe(key("trader"), TraderItem.createItem());
+        traderRecipe.shape("DGN", "EKE", "NGD");
         traderRecipe.setIngredient('D', Material.DIAMOND_BLOCK);
         traderRecipe.setIngredient('G', Material.GOLD_BLOCK);
         traderRecipe.setIngredient('N', Material.NETHERITE_INGOT);
         traderRecipe.setIngredient('E', Material.EMERALD_BLOCK);
         traderRecipe.setIngredient('K', Material.OMINOUS_TRIAL_KEY);
+        addRecipe(traderRecipe, "trader");
 
-        getServer().addRecipe(traderRecipe);
+        ShapedRecipe anvil = new ShapedRecipe(key("easy_anvil"), new ItemStack(Material.ANVIL));
+        anvil.shape("B", "I");
+        anvil.setIngredient('B', Material.IRON_BLOCK);
+        anvil.setIngredient('I', Material.IRON_INGOT);
+        addRecipe(anvil, "easy_anvil");
 
-        getServer().getPluginManager().registerEvents(new ArcaneGuiListener(this), this);
+        ShapedRecipe shulker = new ShapedRecipe(key("easy_shulker"), new ItemStack(Material.SHULKER_BOX));
+        shulker.shape("ADA", "DBD", "ADA");
+        shulker.setIngredient('A', Material.AMETHYST_SHARD);
+        shulker.setIngredient('D', Material.DIAMOND);
+        shulker.setIngredient('B', Material.BUNDLE);
+        addRecipe(shulker, "easy_shulker");
 
-        getServer().getPluginManager().registerEvents(new ArcaneKillEffectListener(this), this);
+        ShapedRecipe goldenApple = new ShapedRecipe(key("easy_golden_apple"), new ItemStack(Material.GOLDEN_APPLE));
+        goldenApple.shape(" G ", "GAG", " G ");
+        goldenApple.setIngredient('G', Material.GOLD_INGOT);
+        goldenApple.setIngredient('A', Material.APPLE);
+        addRecipe(goldenApple, "easy_golden_apple");
 
-        ArcaneLevelCommand arcaneCommand = new ArcaneLevelCommand(this);
+        ShapedRecipe packedIce = new ShapedRecipe(key("easy_packed_ice"), new ItemStack(Material.PACKED_ICE));
+        packedIce.shape("I");
+        packedIce.setIngredient('I', Material.ICE);
+        addRecipe(packedIce, "easy_packed_ice");
 
-        getCommand("arcane").setExecutor(arcaneCommand);
-
-        getCommand("givebreeze").setExecutor(new GiveBreezeCommand(this));
-
-        getCommand("giveluck").setExecutor(new GiveLuckCommand(this));
-
-        getCommand("givefrost").setExecutor(new GiveFrostCommand(this));
-
-        getCommand("giveember").setExecutor(new GiveEmberCommand(this));
-
-        getCommand("givevoid").setExecutor(new VoidArcaneCommand(this));
-
-        getCommand("trust").setExecutor(new TrustCommand(this));
-        getCommand("untrust").setExecutor(new UntrustCommand(this));
-
-        getCommand("trustlist").setExecutor(new TrustListCommand(this));
-
-        getCommand("levelitem").setExecutor(new LevelItemCommand());
-
-        getCommand("__arcane_internal_ability").setExecutor(new ArcaneAbilityCommand(this));
-
-        getCommand("givetrader").setExecutor(new TraderCommand());
-
-        getCommand("withdrawlevel").setExecutor(new AbilityCommand(this));
-
-        getLogger().info("ArcaneCore enabled!");
-
-        registerEasyAnvil();
-        registerEasyShulker();
-        registerEasyGoldenApple();
-        registerEasyCobweb();
-        registerEasyPackedIce();
-        registerStringCobweb();
-        registerStringToCobwebStack();
+        ShapedRecipe cobweb = new ShapedRecipe(key("tripwire_cobweb_recipe"), new ItemStack(Material.COBWEB, 1));
+        cobweb.shape("T T", " T ", "T T");
+        cobweb.setIngredient('T', new RecipeChoice.MaterialChoice(Material.TRIPWIRE_HOOK));
+        addRecipe(cobweb, "tripwire_cobweb_recipe");
     }
 
-    private void registerEasyGoldenApple() {
-        ItemStack result = new ItemStack(Material.GOLDEN_APPLE);
+    private NamespacedKey key(String name) {
+        return new NamespacedKey(this, name);
+    }
 
-        ShapedRecipe recipe = new ShapedRecipe(new NamespacedKey(this, "easy_golden_apple"), result);
-        recipe.shape(
-                " G ",
-                "GAG",
-                " G "
-        );
-
-        recipe.setIngredient('G', Material.GOLD_INGOT);
-        recipe.setIngredient('A', Material.APPLE);
-
+    // Remove any existing recipe with this key before adding, so /reload does
+    // not spam "duplicate recipe key" warnings.
+    private void addRecipe(Recipe recipe, String keyName) {
+        Bukkit.removeRecipe(key(keyName));
         Bukkit.addRecipe(recipe);
-    }
-
-    private void registerEasyCobweb() {
-        ItemStack result = new ItemStack(Material.COBWEB);
-
-        ShapedRecipe recipe = new ShapedRecipe(new NamespacedKey(this, "easy_cobweb"), result);
-        recipe.shape(
-                "S S",
-                " S ",
-                "S S"
-        );
-
-        recipe.setIngredient('S', Material.STRING);
-
-        Bukkit.addRecipe(recipe);
-    }
-
-    private void registerEasyPackedIce() {
-        ItemStack result = new ItemStack(Material.PACKED_ICE);
-
-        ShapedRecipe recipe = new ShapedRecipe(new NamespacedKey(this, "easy_packed_ice"), result);
-        recipe.shape("I");
-
-        recipe.setIngredient('I', Material.ICE);
-
-        Bukkit.addRecipe(recipe);
-    }
-
-    private void registerStringCobweb() {
-        ItemStack result = new ItemStack(Material.COBWEB);
-
-        ShapedRecipe recipe = new ShapedRecipe(new NamespacedKey(this, "string_cobweb"), result);
-        recipe.shape(
-                "T T",
-                " T ",
-                "T T"
-        );
-
-        recipe.setIngredient('T', Material.TRIPWIRE_HOOK);
-
-        Bukkit.addRecipe(recipe);
-    }
-
-    private void registerStringToCobwebStack() {
-        ItemStack result = new ItemStack(Material.STRING, 64);
-
-        ShapedRecipe recipe = new ShapedRecipe(new NamespacedKey(this, "string_to_cobweb_stack"), result);
-        recipe.shape("S");
-
-        recipe.setIngredient('S', Material.STRING);
-
-        Bukkit.addRecipe(recipe);
-    }
-
-    @Override
-    public void onDisable() {
-        trustManager.saveTrusts();
-        levelManager.saveLevels();
-        getLogger().info("ArcaneCore disabled!");
     }
 
     public TrustManager getTrustManager() {
@@ -326,43 +279,23 @@ public class ArcaneCore extends JavaPlugin {
         return playerArcaneManager;
     }
 
-    private void registerEasyAnvil() {
-        ItemStack anvil = new ItemStack(Material.ANVIL);
-
-        ShapedRecipe recipe = new ShapedRecipe(
-                new NamespacedKey(this, "easy_anvil"),
-                anvil
-        );
-
-        recipe.shape(
-                "B",
-                "I"
-        );
-
-        recipe.setIngredient('B', Material.IRON_BLOCK);
-        recipe.setIngredient('I', Material.IRON_INGOT);
-
-        Bukkit.addRecipe(recipe);
+    public BreezeListener getBreezeListener() {
+        return breezeListener;
     }
 
-    private void registerEasyShulker() {
-        ItemStack shulker = new ItemStack(Material.SHULKER_BOX);
+    public FrostListener getFrostListener() {
+        return frostListener;
+    }
 
-        ShapedRecipe recipe = new ShapedRecipe(
-                new NamespacedKey(this, "easy_shulker"),
-                shulker
-        );
+    public EmberListener getEmberListener() {
+        return emberListener;
+    }
 
-        recipe.shape(
-                "ADA",
-                "DBD",
-                "ADA"
-        );
+    public LuckListener getLuckListener() {
+        return luckListener;
+    }
 
-        recipe.setIngredient('A', Material.AMETHYST_SHARD);
-        recipe.setIngredient('D', Material.DIAMOND);
-        recipe.setIngredient('B', Material.BUNDLE);
-
-        Bukkit.addRecipe(recipe);
+    public VoidListener getVoidListener() {
+        return voidListener;
     }
 }

@@ -38,7 +38,7 @@ commands:
     permission-message: You do not have permission to use this command.
   ability:
     description: Changes your Arcane ability trigger
-    usage: /ability <sneakrightclick|swap>
+    usage: /ability <sneakrightclick|swap|slot1-slot9>
   levelitem:
     description: Gives a Level Item
     usage: /levelitem
@@ -60,3 +60,23 @@ commands:
   withdrawlevel:
     description: Withdraw one level
     usage: /withdrawlevel
+  givehearthelmet:
+    description: Gives the Heart Helmet
+    permission: arcanecore.admin
+    permission-message: You do not have permission to use this command.
+  giveresistancechestplate:
+    description: Gives the Resistance Chestplate
+    permission: arcanecore.admin
+    permission-message: You do not have permission to use this command.
+  givehasteleggings:
+    description: Gives the Haste Leggings
+    permission: arcanecore.admin
+    permission-message: You do not have permission to use this command.
+  givespeedboots:
+    description: Gives the Speed Boots
+    permission: arcanecore.admin
+    permission-message: You do not have permission to use this command.
+  givestrengthaxe:
+    description: Gives the Strength Axe
+    permission: arcanecore.admin
+    permission-message: You do not have permission to use this command.

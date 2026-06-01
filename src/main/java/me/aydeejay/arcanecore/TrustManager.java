@@ -1,19 +1,31 @@
 package me.aydeejay.arcanecore;
 
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 
-import java.util.*;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
 public class TrustManager {
 
     private final ArcaneCore plugin;
+    private final File file;
 
     private final Map<UUID, Set<UUID>> trustedPlayers = new HashMap<>();
     private final Map<UUID, UUID> pendingRequests = new HashMap<>();
 
     public TrustManager(ArcaneCore plugin) {
         this.plugin = plugin;
+        this.file = new File(plugin.getDataFolder(), "trusts.yml");
     }
 
     public void sendRequest(Player requester, Player target) {
@@ -30,42 +42,25 @@ public class TrustManager {
     }
 
     public void trust(Player a, Player b) {
-
-        trustedPlayers
-                .computeIfAbsent(a.getUniqueId(), uuid -> new HashSet<>())
-                .add(b.getUniqueId());
-
-        trustedPlayers
-                .computeIfAbsent(b.getUniqueId(), uuid -> new HashSet<>())
-                .add(a.getUniqueId());
-
-        saveTrusts();
+        trustedPlayers.computeIfAbsent(a.getUniqueId(), uuid -> new HashSet<>()).add(b.getUniqueId());
+        trustedPlayers.computeIfAbsent(b.getUniqueId(), uuid -> new HashSet<>()).add(a.getUniqueId());
+        save();
     }
 
     public void untrust(Player a, Player b) {
-
-        if (trustedPlayers.containsKey(a.getUniqueId())) {
-            trustedPlayers.get(a.getUniqueId()).remove(b.getUniqueId());
+        Set<UUID> aSet = trustedPlayers.get(a.getUniqueId());
+        if (aSet != null) {
+            aSet.remove(b.getUniqueId());
         }
-
-        if (trustedPlayers.containsKey(b.getUniqueId())) {
-            trustedPlayers.get(b.getUniqueId()).remove(a.getUniqueId());
+        Set<UUID> bSet = trustedPlayers.get(b.getUniqueId());
+        if (bSet != null) {
+            bSet.remove(a.getUniqueId());
         }
-
-        saveTrusts();
+        save();
     }
 
     public boolean trusts(Player a, Player b) {
-
-        return trustedPlayers
-                .getOrDefault(a.getUniqueId(), new HashSet<>())
-                .contains(b.getUniqueId())
-
-                &&
-
-                trustedPlayers
-                        .getOrDefault(b.getUniqueId(), new HashSet<>())
-                        .contains(a.getUniqueId());
+        return isTrustedByUUID(a.getUniqueId(), b.getUniqueId());
     }
 
     public boolean shouldBlockDamage(Player a, Player b) {
@@ -77,59 +72,81 @@ public class TrustManager {
     }
 
     public boolean isTrustedByUUID(UUID a, UUID b) {
-
-        return trustedPlayers
-                .getOrDefault(a, new HashSet<>())
-                .contains(b)
-
-                &&
-
-                trustedPlayers
-                        .getOrDefault(b, new HashSet<>())
-                        .contains(a);
+        return trustedPlayers.getOrDefault(a, new HashSet<>()).contains(b)
+                && trustedPlayers.getOrDefault(b, new HashSet<>()).contains(a);
     }
 
-    public void loadTrusts() {
+    public void load() {
+        trustedPlayers.clear();
 
-        FileConfiguration config = plugin.getConfig();
+        if (file.exists()) {
+            FileConfiguration data = YamlConfiguration.loadConfiguration(file);
+            loadTrusts(data, "");
+        }
 
-        if (!config.contains("trusts")) {
+        migrateLegacyTrusts();
+    }
+
+    private void migrateLegacyTrusts() {
+        ConfigurationSection section = plugin.getConfig().getConfigurationSection("trusts");
+        if (section == null) {
             return;
         }
 
-        for (String key : config.getConfigurationSection("trusts").getKeys(false)) {
+        loadTrusts(section, "");
+        if (!saveToFile()) {
+            return;
+        }
 
-            UUID playerId = UUID.fromString(key);
+        plugin.getConfig().set("trusts", null);
+        plugin.saveConfig();
+    }
 
-            List<String> list = config.getStringList("trusts." + key);
-
-            Set<UUID> trusted = new HashSet<>();
-
-            for (String id : list) {
-                trusted.add(UUID.fromString(id));
+    private void loadTrusts(ConfigurationSection section, String pathPrefix) {
+        for (String key : section.getKeys(false)) {
+            UUID playerId;
+            try {
+                playerId = UUID.fromString(key);
+            } catch (IllegalArgumentException ignored) {
+                continue;
             }
 
+            Set<UUID> trusted = new HashSet<>();
+            for (String id : section.getStringList(pathPrefix + key)) {
+                try {
+                    trusted.add(UUID.fromString(id));
+                } catch (IllegalArgumentException ignored) {
+                    // Skip malformed entry.
+                }
+            }
             trustedPlayers.put(playerId, trusted);
         }
     }
 
-    public void saveTrusts() {
+    public void save() {
+        saveToFile();
+    }
 
-        FileConfiguration config = plugin.getConfig();
+    private boolean saveToFile() {
+        FileConfiguration data = new YamlConfiguration();
 
-        config.set("trusts", null);
-
-        for (UUID playerId : trustedPlayers.keySet()) {
-
+        for (Map.Entry<UUID, Set<UUID>> entry : trustedPlayers.entrySet()) {
             List<String> list = new ArrayList<>();
-
-            for (UUID trustedId : trustedPlayers.get(playerId)) {
+            for (UUID trustedId : entry.getValue()) {
                 list.add(trustedId.toString());
             }
-
-            config.set("trusts." + playerId, list);
+            data.set(entry.getKey().toString(), list);
         }
 
-        plugin.saveConfig();
+        try {
+            if (!plugin.getDataFolder().exists()) {
+                plugin.getDataFolder().mkdirs();
+            }
+            data.save(file);
+            return true;
+        } catch (IOException e) {
+            plugin.getLogger().warning("Failed to save trusts.yml: " + e.getMessage());
+            return false;
+        }
     }
 }

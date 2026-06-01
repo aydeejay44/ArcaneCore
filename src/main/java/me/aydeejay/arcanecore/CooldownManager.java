@@ -14,11 +14,20 @@ public class CooldownManager {
 
     public CooldownManager(ArcaneCore plugin) {
         this.plugin = plugin;
+        plugin.getServer().getScheduler().runTaskTimer(plugin, this::clearExpired, 20L * 60, 20L * 60);
     }
 
     public boolean isOnCooldown(UUID uuid, String ability) {
         String key = uuid + ":" + ability;
-        return cooldowns.containsKey(key) && System.currentTimeMillis() < cooldowns.get(key);
+        Long until = cooldowns.get(key);
+        if (until == null) {
+            return false;
+        }
+        if (System.currentTimeMillis() >= until) {
+            cooldowns.remove(key); // evict expired entry
+            return false;
+        }
+        return true;
     }
 
     public void setCooldown(UUID uuid, String ability, int seconds) {
@@ -27,23 +36,26 @@ public class CooldownManager {
     }
 
     public long getTimeLeft(UUID uuid, String ability) {
-        String key = uuid + ":" + ability;
-
-        if (!cooldowns.containsKey(key)) {
-            return 0;
-        }
-
-        return Math.max(0, (cooldowns.get(key) - System.currentTimeMillis()) / 1000);
+        return getRemainingMillis(uuid, ability) / 1000;
     }
 
     public long getRemainingMillis(UUID uuid, String ability) {
         String key = uuid + ":" + ability;
-
-        if (!cooldowns.containsKey(key)) {
+        Long until = cooldowns.get(key);
+        if (until == null) {
             return 0;
         }
+        long remaining = until - System.currentTimeMillis();
+        if (remaining <= 0) {
+            cooldowns.remove(key);
+            return 0;
+        }
+        return remaining;
+    }
 
-        return Math.max(0, cooldowns.get(key) - System.currentTimeMillis());
+    private void clearExpired() {
+        long now = System.currentTimeMillis();
+        cooldowns.values().removeIf(until -> until <= now);
     }
 
     public void showCooldown(Player player, String abilityName, String abilityKey) {

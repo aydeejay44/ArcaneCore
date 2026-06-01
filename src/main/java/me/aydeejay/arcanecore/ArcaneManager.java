@@ -14,7 +14,8 @@ public class ArcaneManager {
         return BreezeArcane.isBreezeArcane(item)
                 || LuckArcane.isLuckArcane(item)
                 || FrostArcane.isFrostArcane(item)
-        || EmberArcane.isEmberArcane(item);
+                || EmberArcane.isEmberArcane(item)
+                || VoidArcane.isVoidArcane(item);
     }
 
     public boolean hasBreeze(Player player) {

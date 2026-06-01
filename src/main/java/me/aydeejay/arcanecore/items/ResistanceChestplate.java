@@ -1,0 +1,44 @@
+package me.aydeejay.arcanecore.items;
+
+import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
+import org.bukkit.ChatColor;
+import org.bukkit.enchantments.Enchantment;
+import org.bukkit.inventory.ItemFlag;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ArmorMeta;
+import org.bukkit.inventory.meta.trim.ArmorTrim;
+import org.bukkit.inventory.meta.trim.TrimMaterial;
+import org.bukkit.inventory.meta.trim.TrimPattern;
+import org.bukkit.persistence.PersistentDataType;
+
+public class ResistanceChestplate {
+
+    private static final NamespacedKey KEY = NamespacedKey.fromString("arcanecore:resistance_chestplate");
+
+    public static ItemStack create() {
+        ItemStack item = new ItemStack(Material.NETHERITE_CHESTPLATE);
+        ArmorMeta meta = (ArmorMeta) item.getItemMeta();
+
+        meta.setDisplayName(ChatColor.DARK_PURPLE + "Resistance Chestplate");
+        meta.setUnbreakable(true);
+        meta.setTrim(new ArmorTrim(TrimMaterial.QUARTZ, TrimPattern.SILENCE));
+
+        meta.addEnchant(Enchantment.PROTECTION, 3, true);
+        meta.addEnchant(Enchantment.UNBREAKING, 3, true);
+        meta.addEnchant(Enchantment.MENDING, 1, true);
+
+        meta.addItemFlags(ItemFlag.HIDE_UNBREAKABLE);
+        meta.getPersistentDataContainer().set(KEY, PersistentDataType.BOOLEAN, true);
+
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    public static boolean isResistanceChestplate(ItemStack item) {
+        if (item == null || !item.hasItemMeta()) {
+            return false;
+        }
+        return item.getItemMeta().getPersistentDataContainer().has(KEY, PersistentDataType.BOOLEAN);
+    }
+}
