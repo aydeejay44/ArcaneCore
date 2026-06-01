@@ -24,7 +24,7 @@ public class HasteLeggings {
         meta.setUnbreakable(true);
         meta.setTrim(new ArmorTrim(TrimMaterial.QUARTZ, TrimPattern.SILENCE));
 
-        meta.addEnchant(Enchantment.PROTECTION, 4, true);
+        meta.addEnchant(Enchantment.PROTECTION, 3, true);
         meta.addEnchant(Enchantment.SWIFT_SNEAK, 3, true);
         meta.addEnchant(Enchantment.UNBREAKING, 3, true);
         meta.addEnchant(Enchantment.MENDING, 1, true);
@@ -37,9 +37,11 @@ public class HasteLeggings {
     }
 
     public static boolean isHasteLeggings(ItemStack item) {
-        if (item == null || !item.hasItemMeta()) {
-            return false;
-        }
-        return item.getItemMeta().getPersistentDataContainer().has(KEY, PersistentDataType.BOOLEAN);
+        return CustomItemMatcher.matches(
+                item,
+                Material.NETHERITE_LEGGINGS,
+                KEY,
+                "Haste Leggings"
+        );
     }
 }

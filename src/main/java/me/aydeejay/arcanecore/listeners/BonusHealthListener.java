@@ -39,10 +39,11 @@ public class BonusHealthListener implements Listener {
 
         double bonus = 0.0;
 
+        if (HeartHelmet.isHeartHelmet(player.getInventory().getHelmet())) {
+            bonus += 10.0; // 5 hearts
+        }
+
         if (plugin.getLevelManager().getLevel(player) > 0) {
-            if (HeartHelmet.isHeartHelmet(player.getInventory().getHelmet())) {
-                bonus += 10.0; // 5 hearts
-            }
             if (plugin.getArcaneManager().hasVoid(player)) {
                 bonus += plugin.getConfig().getInt("void.passive.extra-hearts", 5) * 2.0;
             }

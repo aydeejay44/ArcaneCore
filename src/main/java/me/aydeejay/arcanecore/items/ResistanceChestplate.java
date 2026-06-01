@@ -36,9 +36,11 @@ public class ResistanceChestplate {
     }
 
     public static boolean isResistanceChestplate(ItemStack item) {
-        if (item == null || !item.hasItemMeta()) {
-            return false;
-        }
-        return item.getItemMeta().getPersistentDataContainer().has(KEY, PersistentDataType.BOOLEAN);
+        return CustomItemMatcher.matches(
+                item,
+                Material.NETHERITE_CHESTPLATE,
+                KEY,
+                "Resistance Chestplate"
+        );
     }
 }

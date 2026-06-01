@@ -4,7 +4,6 @@ import me.aydeejay.arcanecore.ArcaneCore;
 import me.aydeejay.arcanecore.items.StrengthAxe;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
@@ -21,14 +20,8 @@ public class StrengthAxeListener implements Listener {
         plugin.getServer().getScheduler().runTaskTimer(plugin, () -> {
             for (Player player : plugin.getServer().getOnlinePlayers()) {
 
-                boolean hasAxe = false;
-
-                for (ItemStack item : player.getInventory().getContents()) {
-                    if (StrengthAxe.isStrengthAxe(item)) {
-                        hasAxe = true;
-                        break;
-                    }
-                }
+                boolean hasAxe = StrengthAxe.isStrengthAxe(player.getInventory().getItemInMainHand())
+                        || StrengthAxe.isStrengthAxe(player.getInventory().getItemInOffHand());
 
                 if (hasAxe) {
                     player.addPotionEffect(new PotionEffect(

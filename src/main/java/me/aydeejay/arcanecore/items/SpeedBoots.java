@@ -39,9 +39,11 @@ public class SpeedBoots {
     }
 
     public static boolean isSpeedBoots(ItemStack item) {
-        if (item == null || !item.hasItemMeta()) {
-            return false;
-        }
-        return item.getItemMeta().getPersistentDataContainer().has(KEY, PersistentDataType.BOOLEAN);
+        return CustomItemMatcher.matches(
+                item,
+                Material.NETHERITE_BOOTS,
+                KEY,
+                "Speed Boots"
+        );
     }
 }

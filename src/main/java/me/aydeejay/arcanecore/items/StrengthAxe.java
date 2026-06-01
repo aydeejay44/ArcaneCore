@@ -22,7 +22,7 @@ public class StrengthAxe {
         meta.setDisplayName(ChatColor.RED + "Strength Axe");
         meta.setUnbreakable(true);
 
-        meta.addEnchant(Enchantment.SHARPNESS, 5, true);
+        meta.addEnchant(Enchantment.SHARPNESS, 4, true);
         meta.addEnchant(Enchantment.SMITE, 5, true);
         meta.addEnchant(Enchantment.BANE_OF_ARTHROPODS, 5, true);
         meta.addEnchant(Enchantment.EFFICIENCY, 5, true);
@@ -38,9 +38,11 @@ public class StrengthAxe {
     }
 
     public static boolean isStrengthAxe(ItemStack item) {
-        if (item == null || !item.hasItemMeta()) {
-            return false;
-        }
-        return item.getItemMeta().getPersistentDataContainer().has(KEY, PersistentDataType.BOOLEAN);
+        return CustomItemMatcher.matches(
+                item,
+                Material.NETHERITE_AXE,
+                KEY,
+                "Strength Axe"
+        );
     }
 }
