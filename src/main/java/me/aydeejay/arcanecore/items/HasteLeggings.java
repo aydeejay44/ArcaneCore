@@ -22,7 +22,7 @@ public class HasteLeggings {
 
         meta.setDisplayName(ChatColor.YELLOW + "Haste Leggings");
         meta.setUnbreakable(true);
-        meta.setTrim(new ArmorTrim(TrimMaterial.QUARTZ, TrimPattern.SILENCE));
+        meta.setTrim(new ArmorTrim(TrimMaterial.QUARTZ, TrimPattern.FLOW));
 
         meta.addEnchant(Enchantment.PROTECTION, 3, true);
         meta.addEnchant(Enchantment.SWIFT_SNEAK, 3, true);

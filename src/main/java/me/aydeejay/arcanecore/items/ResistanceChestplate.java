@@ -22,7 +22,7 @@ public class ResistanceChestplate {
 
         meta.setDisplayName(ChatColor.DARK_PURPLE + "Resistance Chestplate");
         meta.setUnbreakable(true);
-        meta.setTrim(new ArmorTrim(TrimMaterial.QUARTZ, TrimPattern.SILENCE));
+        meta.setTrim(new ArmorTrim(TrimMaterial.QUARTZ, TrimPattern.FLOW));
 
         meta.addEnchant(Enchantment.PROTECTION, 3, true);
         meta.addEnchant(Enchantment.UNBREAKING, 3, true);

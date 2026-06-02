@@ -9,8 +9,8 @@ levels:
 breeze:
   cooldown-seconds: 25
   dash-distance:
-    level-3: 8.0
-    level-4: 13.0
+    level-3: 5.0
+    level-4: 8.0
   dash-damage: 4.0
   hit-radius: 2.8
   damage-window-ticks: 30

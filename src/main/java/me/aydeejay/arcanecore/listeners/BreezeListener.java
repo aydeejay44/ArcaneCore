@@ -13,6 +13,7 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.util.BoundingBox;
 import org.bukkit.util.Vector;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -91,9 +92,9 @@ public class BreezeListener implements Listener {
         double distance = 0.0;
 
         if (level >= 4) {
-            distance = plugin.getConfig().getDouble("breeze.dash-distance.level-4", 13.0);
+            distance = plugin.getConfig().getDouble("breeze.dash-distance.level-4", 8.0);
         } else if (level >= 3) {
-            distance = plugin.getConfig().getDouble("breeze.dash-distance.level-3", 8.0);
+            distance = plugin.getConfig().getDouble("breeze.dash-distance.level-3", 5.0);
         }
 
         Vector direction = player.getLocation()
@@ -230,6 +231,11 @@ public class BreezeListener implements Listener {
                         travel.clone().multiply(t)
                 );
 
+                Vector positionOffset = checkPoint.toVector().subtract(currentLocation.toVector());
+                BoundingBox dashHitBox = player.getBoundingBox()
+                        .shift(positionOffset)
+                        .expand(hitRadius);
+
                 for (LivingEntity target : player.getWorld().getLivingEntities()) {
 
                     if (target.equals(player)) {
@@ -240,7 +246,7 @@ public class BreezeListener implements Listener {
                         continue;
                     }
 
-                    if (!target.getBoundingBox().expand(hitRadius).contains(checkPoint.toVector())) {
+                    if (!dashHitBox.overlaps(target.getBoundingBox())) {
                         continue;
                     }
 

@@ -11,10 +11,16 @@ import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ArmorMeta;
+import org.bukkit.inventory.meta.trim.ArmorTrim;
+import org.bukkit.inventory.meta.trim.TrimMaterial;
+import org.bukkit.inventory.meta.trim.TrimPattern;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
 public class CustomArmorListener implements Listener {
+
+    private static final ArmorTrim FLOW_TRIM = new ArmorTrim(TrimMaterial.QUARTZ, TrimPattern.FLOW);
 
     private final ArcaneCore plugin;
 
@@ -28,6 +34,8 @@ public class CustomArmorListener implements Listener {
         plugin.getServer().getScheduler().runTaskTimer(plugin, () -> {
 
             for (Player player : plugin.getServer().getOnlinePlayers()) {
+
+                updateExistingArmorTrims(player);
 
                 ItemStack helmet = player.getInventory().getHelmet();
                 ItemStack chestplate = player.getInventory().getChestplate();
@@ -132,5 +140,25 @@ public class CustomArmorListener implements Listener {
             }
 
         }, 0L, 20L);
+    }
+
+    private void updateExistingArmorTrims(Player player) {
+        for (ItemStack item : player.getInventory().getContents()) {
+            if (!isCustomArmor(item) || !(item.getItemMeta() instanceof ArmorMeta meta)) {
+                continue;
+            }
+
+            if (!FLOW_TRIM.equals(meta.getTrim())) {
+                meta.setTrim(FLOW_TRIM);
+                item.setItemMeta(meta);
+            }
+        }
+    }
+
+    private boolean isCustomArmor(ItemStack item) {
+        return HeartHelmet.isHeartHelmet(item)
+                || ResistanceChestplate.isResistanceChestplate(item)
+                || HasteLeggings.isHasteLeggings(item)
+                || SpeedBoots.isSpeedBoots(item);
     }
 }
