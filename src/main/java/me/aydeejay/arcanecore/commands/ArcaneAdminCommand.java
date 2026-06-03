@@ -32,6 +32,8 @@ public class ArcaneAdminCommand {
             "reloadconfig",
             "statuscompact",
             "statusshort",
+            "statuspack",
+            "statustest",
             "resetplayer"
     );
 
@@ -70,6 +72,8 @@ public class ArcaneAdminCommand {
             case "reloadconfig" -> reloadConfig(sender, args);
             case "statuscompact" -> statusCompact(sender, args);
             case "statusshort" -> statusShort(sender, args);
+            case "statuspack" -> statusPack(sender, args);
+            case "statustest" -> statusTest(sender, args);
             case "resetplayer" -> resetPlayer(sender, args);
             default -> {
                 sender.sendMessage(ChatColor.RED + "Invalid admin subcommand: " + args[1]);
@@ -99,6 +103,10 @@ public class ArcaneAdminCommand {
         }
 
         if (args.length == 3 && subcommand.equals("statusshort")) {
+            return match(args[2], List.of("true", "false"));
+        }
+
+        if (args.length == 3 && subcommand.equals("statuspack")) {
             return match(args[2], List.of("true", "false"));
         }
 
@@ -268,6 +276,48 @@ public class ArcaneAdminCommand {
         return true;
     }
 
+    private boolean statusPack(CommandSender sender, String[] args) {
+        if (args.length != 3) {
+            sender.sendMessage(ChatColor.RED + "Usage: /arcane admin statuspack <true|false>");
+            return true;
+        }
+
+        Boolean resourcePackIcons = parseBoolean(args[2]);
+        if (resourcePackIcons == null) {
+            sender.sendMessage(ChatColor.RED + "Invalid value. Use true for resource-pack icons or false for normal symbols.");
+            return true;
+        }
+
+        plugin.getConfig().set("status-bar.resource-pack-icons", resourcePackIcons);
+        plugin.saveConfig();
+        plugin.reloadConfig();
+        plugin.getStatusBarManager().reload();
+
+        sender.sendMessage(PREFIX + "Resource-pack status icons are now "
+                + (resourcePackIcons ? ChatColor.GREEN + "enabled" : ChatColor.RED + "disabled")
+                + ChatColor.GRAY + ".");
+        if (!resourcePackIcons) {
+            sender.sendMessage(PREFIX + "The status bar will use normal Minecraft symbols instead.");
+        }
+        return true;
+    }
+
+    private boolean statusTest(CommandSender sender, String[] args) {
+        if (args.length != 2) {
+            sender.sendMessage(ChatColor.RED + "Usage: /arcane admin statustest");
+            return true;
+        }
+
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(ChatColor.RED + "Only an in-game player can run the status icon test.");
+            return true;
+        }
+
+        plugin.getStatusBarManager().sendResourcePackIconTest(player);
+        sender.sendMessage(PREFIX + "Sent a status icon test to your chat and action bar.");
+        return true;
+    }
+
     private boolean resetPlayer(CommandSender sender, String[] args) {
         if (args.length != 3) {
             sender.sendMessage(ChatColor.RED + "Usage: /arcane admin resetplayer <player>");
@@ -301,6 +351,8 @@ public class ArcaneAdminCommand {
         sender.sendMessage(ChatColor.GRAY + "/arcane admin reloadconfig");
         sender.sendMessage(ChatColor.GRAY + "/arcane admin statuscompact <true|false>");
         sender.sendMessage(ChatColor.GRAY + "/arcane admin statusshort <true|false>");
+        sender.sendMessage(ChatColor.GRAY + "/arcane admin statuspack <true|false>");
+        sender.sendMessage(ChatColor.GRAY + "/arcane admin statustest");
         sender.sendMessage(ChatColor.GRAY + "/arcane admin resetplayer <player>");
     }
 

@@ -51,6 +51,17 @@ public class ArcaneStatusBarManager {
         start();
     }
 
+    public void sendResourcePackIconTest(Player player) {
+        Component iconTest = Component.text("Arcane icon test: ", NamedTextColor.GRAY)
+                .append(Component.text("\uE101 \uE102 \uE103 \uE104 \uE105")
+                        .font(getIconFontKey())
+                        .color(NamedTextColor.WHITE))
+                .append(Component.text(" | fallback: \u2739 \u2744 \u2726 \u2618 \u2727", NamedTextColor.GRAY));
+
+        player.sendMessage(iconTest);
+        player.sendActionBar(iconTest);
+    }
+
     private void updateAllPlayers() {
         if (!plugin.getConfig().getBoolean("status-bar.enabled", true)) {
             return;
@@ -457,9 +468,9 @@ public class ArcaneStatusBarManager {
     }
 
     private enum ArcaneTheme {
-        BREEZE("breeze", "\uD83C\uDF00", "\u2601", NONE_ICON, "\uE103", ChatColor.WHITE),
+        BREEZE("breeze", "\u2726", "\u2601", NONE_ICON, "\uE103", ChatColor.WHITE),
         FROST("frost", "\u2744", "\u2744", NONE_ICON, "\uE102", ChatColor.AQUA),
-        EMBER("ember", "\uD83D\uDD25", "\u2739", NONE_ICON, "\uE101", ChatColor.GOLD),
+        EMBER("ember", "\u2739", "\u2600", NONE_ICON, "\uE101", ChatColor.GOLD),
         LUCK("luck", "\u2618", "\u2726", NONE_ICON, "\uE104", ChatColor.YELLOW),
         VOID("void", "\u2727", "\u2604", "\u2620", "\uE105", ChatColor.DARK_PURPLE);
 
