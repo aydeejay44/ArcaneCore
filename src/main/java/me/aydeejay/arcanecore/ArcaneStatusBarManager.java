@@ -222,30 +222,42 @@ public class ArcaneStatusBarManager {
     private RenderedStatus renderStatus(ArcaneTheme theme, String icon, Status status) {
         return switch (status.type()) {
             case ACTIVE -> new RenderedStatus(
-                    theme.passiveColor() + icon + statusLabel("ACTIVE", "A"),
-                    theme.passiveColor() + icon + " A"
+                    iconStatus(icon, theme.passiveColor(), statusLabel("ACTIVE", "A")),
+                    iconStatus(icon, theme.passiveColor(), " A")
             );
             case INACTIVE -> new RenderedStatus(
-                    ChatColor.GRAY + icon + statusLabel("INACTIVE", "I"),
-                    ChatColor.GRAY + icon + " I"
+                    iconStatus(icon, ChatColor.GRAY, statusLabel("INACTIVE", "I")),
+                    iconStatus(icon, ChatColor.GRAY, " I")
             );
             case LOCKED -> new RenderedStatus(
-                    ChatColor.RED + icon + statusLabel("LOCKED", "L"),
-                    ChatColor.RED + icon + " L"
+                    iconStatus(icon, ChatColor.RED, statusLabel("LOCKED", "L")),
+                    iconStatus(icon, ChatColor.RED, " L")
             );
             case READY -> new RenderedStatus(
-                    ChatColor.GREEN + icon + statusLabel("READY", "R"),
-                    ChatColor.GREEN + icon + " R"
+                    iconStatus(icon, ChatColor.GREEN, statusLabel("READY", "R")),
+                    iconStatus(icon, ChatColor.GREEN, " R")
             );
             case NONE -> new RenderedStatus(
                     ChatColor.GRAY + NONE_ICON + noneLabel(),
                     ChatColor.GRAY.toString() + NONE_ICON
             );
             case COOLDOWN -> new RenderedStatus(
-                    status.color() + getCooldownIcon(theme, icon) + " " + status.seconds() + "s",
-                    status.color() + getCooldownIcon(theme, icon) + status.seconds() + "s"
+                    iconStatus(getCooldownIcon(theme, icon), status.color(), " " + status.seconds() + "s"),
+                    iconStatus(getCooldownIcon(theme, icon), status.color(), " " + status.seconds() + "s")
             );
         };
+    }
+
+    private String iconStatus(String icon, ChatColor textColor, String text) {
+        if (useResourcePackIcons() && isResourcePackIcon(icon)) {
+            return ChatColor.WHITE + icon + textColor + text;
+        }
+
+        return textColor + icon + text;
+    }
+
+    private boolean isResourcePackIcon(String icon) {
+        return icon.length() == 1 && icon.charAt(0) >= '\uE101' && icon.charAt(0) <= '\uE105';
     }
 
     private RenderedStatus renderNeutralStatus(String icon, Status status) {
