@@ -11,6 +11,8 @@ import org.bukkit.event.Listener;
 
 public class BonusHealthListener implements Listener {
 
+    private static final double HEALTH_PER_HEART = 2.0;
+
     private final ArcaneCore plugin;
     private final NamespacedKey modifierKey;
 
@@ -40,12 +42,13 @@ public class BonusHealthListener implements Listener {
         double bonus = 0.0;
 
         if (HeartHelmet.isHeartHelmet(player.getInventory().getHelmet())) {
-            bonus += 10.0; // 5 hearts
+            bonus += 5.0 * HEALTH_PER_HEART;
         }
 
         if (plugin.getLevelManager().getLevel(player) > 0) {
             if (plugin.getArcaneManager().hasVoid(player)) {
-                bonus += plugin.getConfig().getInt("void.passive.extra-hearts", 5) * 2.0;
+                double voidExtraHearts = Math.max(0.0, plugin.getConfig().getDouble("void.passive.extra-hearts", 5.0));
+                bonus += voidExtraHearts * HEALTH_PER_HEART;
             }
         }
 

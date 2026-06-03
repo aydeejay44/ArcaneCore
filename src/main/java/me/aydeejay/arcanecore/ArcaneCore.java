@@ -34,8 +34,6 @@ import me.aydeejay.arcanecore.listeners.FrostListener;
 import me.aydeejay.arcanecore.listeners.LevelItemListener;
 import me.aydeejay.arcanecore.listeners.LevelZeroListener;
 import me.aydeejay.arcanecore.listeners.LuckListener;
-import me.aydeejay.arcanecore.listeners.MaceCooldownListener;
-import me.aydeejay.arcanecore.listeners.NetheriteCraftBlockListener;
 import me.aydeejay.arcanecore.listeners.PlayerListener;
 import me.aydeejay.arcanecore.listeners.StrengthAxeListener;
 import me.aydeejay.arcanecore.listeners.TraderListener;
@@ -116,7 +114,6 @@ public class ArcaneCore extends JavaPlugin {
         register(bonusHealthListener);
         register(new StrengthAxeListener(this));
         register(new CustomArmorListener(this));
-        register(new NetheriteCraftBlockListener());
         register(new LevelZeroListener(this));
         register(new TrustListener(this));
         register(new PlayerListener(this));
@@ -126,7 +123,6 @@ public class ArcaneCore extends JavaPlugin {
         register(new ArcaneGuiListener(this));
         register(new ArcaneKillEffectListener(this));
         register(new TraderListener(this));
-        register(new MaceCooldownListener());
 
         trustVisualListener = new TrustVisualListener(this);
         register(trustVisualListener);

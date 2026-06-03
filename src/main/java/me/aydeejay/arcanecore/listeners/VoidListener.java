@@ -12,6 +12,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -201,13 +202,13 @@ public class VoidListener implements Listener {
             return;
         }
 
-        final int[] durationTicks = {
-                plugin.getConfig().getInt("void.breath.duration-ticks", 60)
-        };
-
+        int durationTicks = Math.max(1, plugin.getConfig().getInt("void.breath.duration-ticks", 60));
+        int pulseIntervalTicks = 10;
         double totalDamage = plugin.getConfig().getDouble("void.breath.total-damage", 12.0);
-        double damagePerTick = totalDamage / (durationTicks[0] / 10.0);
+        int damagePulses = Math.max(1, (int) Math.ceil(durationTicks / (double) pulseIntervalTicks));
+        double damagePerPulse = totalDamage / damagePulses;
 
+        final int[] elapsedTicks = {0};
         HashSet<UUID> recentlyHit = new HashSet<>();
 
         player.sendMessage(ChatColor.DARK_PURPLE + "Void Breath unleashed!");
@@ -221,9 +222,12 @@ public class VoidListener implements Listener {
 
             Location start = player.getEyeLocation();
             Vector direction = start.getDirection().normalize();
-            Vector rightBase = direction.clone()
-                    .crossProduct(new Vector(0, 1, 0))
-                    .normalize();
+            Vector rightBase = direction.clone().crossProduct(new Vector(0, 1, 0));
+            if (rightBase.lengthSquared() == 0) {
+                rightBase = new Vector(1, 0, 0);
+            } else {
+                rightBase.normalize();
+            }
 
             int range = plugin.getConfig().getInt("void.breath.range", 10);
             double maxWidth = plugin.getConfig().getDouble("void.breath.max-width", 6.0);
@@ -255,7 +259,11 @@ public class VoidListener implements Listener {
                         if (recentlyHit.contains(target.getUniqueId())) continue;
 
                         recentlyHit.add(target.getUniqueId());
-                        target.damage(damagePerTick, player);
+                        if (!dealTrueDamage(target, player, damagePerPulse)) {
+                            continue;
+                        }
+
+                        applyVoidBreathKnockback(target, direction);
 
                         target.getWorld().playSound(
                                 target.getLocation(),
@@ -268,13 +276,13 @@ public class VoidListener implements Listener {
             }
 
             recentlyHit.clear();
-            durationTicks[0] -= 10;
+            elapsedTicks[0] += pulseIntervalTicks;
 
-            if (durationTicks[0] <= 0) {
+            if (elapsedTicks[0] >= durationTicks) {
                 task.cancel();
             }
 
-        }, 0L, 10L);
+        }, 0L, pulseIntervalTicks);
 
         plugin.getCooldownManager().setCooldown(
                 player.getUniqueId(),
@@ -283,6 +291,50 @@ public class VoidListener implements Listener {
         );
 
         plugin.getCooldownManager().startActionBarCooldown(player, "Void Breath", "void_breath");
+    }
+
+    private void applyVoidBreathKnockback(LivingEntity target, Vector direction) {
+        Vector knockback = direction.clone();
+        knockback.setY(0);
+
+        if (knockback.lengthSquared() == 0) {
+            return;
+        }
+
+        knockback.normalize().multiply(0.25);
+        knockback.setY(0.06);
+        target.setVelocity(target.getVelocity().add(knockback));
+    }
+
+    @SuppressWarnings("removal")
+    private boolean dealTrueDamage(LivingEntity target, Player source, double damage) {
+        if (damage <= 0 || target.isDead()) {
+            return false;
+        }
+
+        EntityDamageByEntityEvent damageEvent = new EntityDamageByEntityEvent(
+                source,
+                target,
+                EntityDamageEvent.DamageCause.MAGIC,
+                damage
+        );
+        plugin.getServer().getPluginManager().callEvent(damageEvent);
+
+        if (damageEvent.isCancelled()) {
+            return false;
+        }
+
+        double finalDamage = Math.max(0.0, damageEvent.getFinalDamage());
+        if (finalDamage <= 0) {
+            return false;
+        }
+
+        target.setNoDamageTicks(0);
+        target.setKiller(source);
+        target.setLastDamage(finalDamage);
+        target.setLastDamageCause(damageEvent);
+        target.setHealth(Math.max(0.0, target.getHealth() - finalDamage));
+        return true;
     }
 
     @EventHandler

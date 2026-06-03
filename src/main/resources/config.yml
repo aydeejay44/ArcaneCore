@@ -61,6 +61,7 @@ void:
     cooldown-seconds: 60
 
 trader-chances:
-  breeze: 34
-  frost: 33
-  ember: 33
+  breeze: 25
+  frost: 25
+  ember: 25
+  luck: 25

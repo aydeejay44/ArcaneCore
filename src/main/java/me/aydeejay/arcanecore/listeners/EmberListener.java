@@ -2,6 +2,7 @@ package me.aydeejay.arcanecore.listeners;
 
 import me.aydeejay.arcanecore.ArcaneCore;
 import me.aydeejay.arcanecore.arcanes.EmberArcane;
+import org.bukkit.Color;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Particle;
@@ -12,6 +13,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
@@ -160,35 +163,7 @@ public class EmberListener implements Listener {
                         return;
                     }
 
-                    point.getWorld().spawnParticle(
-                            Particle.FLAME,
-                            point,
-                            18,
-                            0.12,
-                            0.12,
-                            0.12,
-                            0.02
-                    );
-
-                    point.getWorld().spawnParticle(
-                            Particle.LAVA,
-                            point,
-                            3,
-                            0.06,
-                            0.06,
-                            0.06,
-                            0
-                    );
-
-                    point.getWorld().spawnParticle(
-                            Particle.SMOKE,
-                            point,
-                            8,
-                            0.1,
-                            0.1,
-                            0.1,
-                            0.01
-                    );
+                    spawnEmberBeamParticles(point);
 
                     for (Entity entity : point.getWorld().getNearbyEntities(point, hitRadius, hitRadius, hitRadius)) {
                         if (!(entity instanceof LivingEntity target)) continue;
@@ -203,8 +178,12 @@ public class EmberListener implements Listener {
 
                         hitEntities.add(target);
 
+                        if (!dealTrueDamage(target, player, damage)) {
+                            continue;
+                        }
+
                         target.setFireTicks(fireTicks);
-                        target.damage(damage, player);
+                        applyEmberKnockback(target, direction);
 
                         target.getWorld().spawnParticle(
                                 Particle.FLAME,
@@ -226,5 +205,72 @@ public class EmberListener implements Listener {
                 }
             }
         }.runTaskTimer(plugin, 0L, 1L);
+    }
+
+    private void spawnEmberBeamParticles(Location point) {
+        point.getWorld().spawnParticle(Particle.FLAME, point, 16, 0.16, 0.16, 0.16, 0.02);
+        point.getWorld().spawnParticle(Particle.SMALL_FLAME, point, 10, 0.14, 0.14, 0.14, 0.02);
+        point.getWorld().spawnParticle(Particle.SMOKE, point, 8, 0.12, 0.12, 0.12, 0.015);
+        point.getWorld().spawnParticle(Particle.ASH, point, 5, 0.18, 0.18, 0.18, 0.01);
+        point.getWorld().spawnParticle(Particle.LAVA, point, 1, 0.05, 0.05, 0.05, 0);
+        point.getWorld().spawnParticle(
+                Particle.DUST,
+                point,
+                8,
+                0.10,
+                0.10,
+                0.10,
+                0,
+                new Particle.DustOptions(Color.fromRGB(255, 90, 20), 1.2f)
+        );
+    }
+
+    private void applyEmberKnockback(LivingEntity target, Vector direction) {
+        if (!(target instanceof Player)) {
+            return;
+        }
+
+        Vector knockback = direction.clone();
+        knockback.setY(0);
+
+        if (knockback.lengthSquared() == 0) {
+            return;
+        }
+
+        knockback.normalize().multiply(0.4);
+        knockback.setY(0.12);
+        target.setVelocity(target.getVelocity().add(knockback));
+    }
+
+    @SuppressWarnings("removal")
+    private boolean dealTrueDamage(LivingEntity target, Player source, double damage) {
+        if (damage <= 0 || target.isDead()) {
+            return false;
+        }
+
+        // Let cancellation-based protections react, then apply health damage directly to bypass armor.
+        EntityDamageByEntityEvent damageEvent = new EntityDamageByEntityEvent(
+                source,
+                target,
+                EntityDamageEvent.DamageCause.MAGIC,
+                damage
+        );
+        plugin.getServer().getPluginManager().callEvent(damageEvent);
+
+        if (damageEvent.isCancelled()) {
+            return false;
+        }
+
+        double finalDamage = Math.max(0.0, damageEvent.getFinalDamage());
+        if (finalDamage <= 0) {
+            return false;
+        }
+
+        target.setNoDamageTicks(0);
+        target.setKiller(source);
+        target.setLastDamage(finalDamage);
+        target.setLastDamageCause(damageEvent);
+        target.setHealth(Math.max(0.0, target.getHealth() - finalDamage));
+        return true;
     }
 }

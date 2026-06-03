@@ -90,6 +90,15 @@ public class TraderListener implements Listener {
         ember.setItemMeta(emberMeta);
         gui.setItem(12, ember);
 
+        ItemStack luck = LuckArcane.createItem();
+        ItemMeta luckMeta = luck.getItemMeta();
+        luckMeta.setLore(List.of(
+                ChatColor.GRAY + "Chance: " +
+                        getChance("luck") + "%"
+        ));
+        luck.setItemMeta(luckMeta);
+        gui.setItem(13, luck);
+
         gui.setItem(15, makeItem(Material.LIME_WOOL, ChatColor.GREEN + "Confirm Reroll",
                 List.of(ChatColor.GRAY + "Consumes 1 Trader",
                         ChatColor.GRAY + "Replaces your normal Arcane")));
@@ -143,8 +152,9 @@ public class TraderListener implements Listener {
         int breezeChance = getChance("breeze");
         int frostChance = getChance("frost");
         int emberChance = getChance("ember");
+        int luckChance = getChance("luck");
 
-        int total = breezeChance + frostChance + emberChance;
+        int total = breezeChance + frostChance + emberChance + luckChance;
         if (total <= 0) {
             player.sendMessage(ChatColor.RED + "Trader chances are not configured correctly.");
             return;
@@ -163,6 +173,9 @@ public class TraderListener implements Listener {
         } else if (roll < breezeChance + frostChance + emberChance) {
             reward = EmberArcane.createItem();
             rewardName = "Ember";
+        } else if (roll < breezeChance + frostChance + emberChance + luckChance) {
+            reward = LuckArcane.createItem();
+            rewardName = "Luck";
         } else {
             throw new IllegalStateException("Trader roll exceeded configured total");
         }
@@ -176,11 +189,11 @@ public class TraderListener implements Listener {
     }
 
     private int getChance(String arcane) {
-        return Math.max(0, plugin.getConfig().getInt("trader-chances." + arcane, 0));
+        return Math.max(0, plugin.getConfig().getInt("trader-chances." + arcane, 25));
     }
 
     private boolean hasConfiguredTraderChance(Player player) {
-        if (getChance("breeze") + getChance("frost") + getChance("ember") > 0) {
+        if (getChance("breeze") + getChance("frost") + getChance("ember") + getChance("luck") > 0) {
             return true;
         }
 
@@ -221,12 +234,13 @@ public class TraderListener implements Listener {
 
                 ItemStack preview;
 
-                int roll = ThreadLocalRandom.current().nextInt(3);
+                int roll = ThreadLocalRandom.current().nextInt(4);
 
                 switch (roll) {
                     case 0 -> preview = BreezeArcane.createItem();
                     case 1 -> preview = FrostArcane.createItem();
-                    default -> preview = EmberArcane.createItem();
+                    case 2 -> preview = EmberArcane.createItem();
+                    default -> preview = LuckArcane.createItem();
                 }
 
                 gui.setItem(22, preview);
