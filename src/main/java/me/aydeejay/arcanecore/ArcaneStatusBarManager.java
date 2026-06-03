@@ -53,14 +53,17 @@ public class ArcaneStatusBarManager {
     }
 
     public void sendResourcePackIconTest(Player player) {
-        Component defaultFontTest = Component.text("Default font icon test: \uE101 \uE102 \uE103 \uE104 \uE105", NamedTextColor.GRAY);
+        Component defaultFontTest = Component.text("Ability mask icon test: \uE101 \uE102 \uE103 \uE104 \uE105", NamedTextColor.GRAY);
+        Component passiveFontTest = Component.text("Passive full-color icon test: ", NamedTextColor.GRAY)
+                .append(Component.text("\uE111 \uE112 \uE113 \uE114 \uE115", NamedTextColor.WHITE));
         Component configuredFontTest = Component.text("Configured font icon test: ", NamedTextColor.GRAY)
-                .append(Component.text("\uE101 \uE102 \uE103 \uE104 \uE105")
+                .append(Component.text("\uE101 \uE102 \uE103 \uE104 \uE105 | \uE111 \uE112 \uE113 \uE114 \uE115")
                         .font(getIconFontKey())
                         .color(NamedTextColor.WHITE))
                 .append(Component.text(" | fallback: \u2739 \u2744 \u2726 \u2618 \u2727", NamedTextColor.GRAY));
 
         player.sendMessage(defaultFontTest);
+        player.sendMessage(passiveFontTest);
         player.sendMessage(configuredFontTest);
         player.sendActionBar(defaultFontTest);
     }
@@ -114,9 +117,9 @@ public class ArcaneStatusBarManager {
 
         return new ArcaneBar(
                 theme,
-                renderStatus(theme, passiveIcon(theme), passive),
-                renderStatus(theme, abilityOneIcon(theme), abilityOne),
-                renderStatus(theme, NONE_ICON, Status.NONE)
+                renderPassiveStatus(theme, passive),
+                renderAbilityStatus(theme, abilityOneIcon(theme), abilityOne),
+                renderAbilityStatus(theme, NONE_ICON, Status.NONE)
         );
     }
 
@@ -129,9 +132,9 @@ public class ArcaneStatusBarManager {
 
         return new ArcaneBar(
                 theme,
-                renderStatus(theme, passiveIcon(theme), getVoidPassiveStatus(player)),
-                renderStatus(theme, abilityOneIcon(theme), getAbilityStatus(player, "void_flight")),
-                renderStatus(theme, abilityTwoIcon(theme), getAbilityStatus(player, "void_breath"))
+                renderPassiveStatus(theme, getVoidPassiveStatus(player)),
+                renderAbilityStatus(theme, abilityOneIcon(theme), getAbilityStatus(player, "void_flight")),
+                renderAbilityStatus(theme, abilityTwoIcon(theme), getAbilityStatus(player, "void_breath"))
         );
     }
 
@@ -220,7 +223,30 @@ public class ArcaneStatusBarManager {
         return Status.cooldown(seconds, getCooldownColor(abilityKey, seconds));
     }
 
-    private RenderedStatus renderStatus(ArcaneTheme theme, String icon, Status status) {
+    private RenderedStatus renderPassiveStatus(ArcaneTheme theme, Status status) {
+        String icon = passiveIcon(theme);
+
+        return switch (status.type()) {
+            case ACTIVE -> new RenderedStatus(
+                    passiveIconStatus(icon, theme.passiveColor(), statusLabel("ACTIVE", "A")),
+                    passiveIconStatus(icon, theme.passiveColor(), " A")
+            );
+            case INACTIVE -> new RenderedStatus(
+                    passiveIconStatus(icon, ChatColor.GRAY, statusLabel("INACTIVE", "I")),
+                    passiveIconStatus(icon, ChatColor.GRAY, " I")
+            );
+            case LOCKED -> new RenderedStatus(
+                    passiveIconStatus(icon, ChatColor.RED, statusLabel("LOCKED", "L")),
+                    passiveIconStatus(icon, ChatColor.RED, " L")
+            );
+            default -> new RenderedStatus(
+                    passiveIconStatus(icon, ChatColor.GRAY, noneLabel()),
+                    passiveIconStatus(icon, ChatColor.GRAY, "")
+            );
+        };
+    }
+
+    private RenderedStatus renderAbilityStatus(ArcaneTheme theme, String icon, Status status) {
         return switch (status.type()) {
             case ACTIVE -> new RenderedStatus(
                     iconStatus(icon, theme.passiveColor(), statusLabel("ACTIVE", "A")),
@@ -253,8 +279,16 @@ public class ArcaneStatusBarManager {
         return textColor + icon + text;
     }
 
-    private boolean isResourcePackIcon(String icon) {
-        return icon.length() == 1 && icon.charAt(0) >= '\uE101' && icon.charAt(0) <= '\uE105';
+    private String passiveIconStatus(String icon, ChatColor textColor, String text) {
+        if (useResourcePackIcons() && isPassiveResourcePackIcon(icon)) {
+            return ChatColor.WHITE + icon + textColor + text;
+        }
+
+        return textColor + icon + text;
+    }
+
+    private boolean isPassiveResourcePackIcon(String icon) {
+        return icon.length() == 1 && icon.charAt(0) >= '\uE111' && icon.charAt(0) <= '\uE115';
     }
 
     private RenderedStatus renderNeutralStatus(String icon, Status status) {
@@ -274,15 +308,15 @@ public class ArcaneStatusBarManager {
     }
 
     private String passiveIcon(ArcaneTheme theme) {
-        return useResourcePackIcons() ? theme.resourcePackIcon() : theme.passiveIcon();
+        return useResourcePackIcons() ? theme.passiveResourcePackIcon() : theme.passiveIcon();
     }
 
     private String abilityOneIcon(ArcaneTheme theme) {
-        return useResourcePackIcons() ? theme.resourcePackIcon() : theme.abilityOneIcon();
+        return useResourcePackIcons() ? theme.statusResourcePackIcon() : theme.abilityOneIcon();
     }
 
     private String abilityTwoIcon(ArcaneTheme theme) {
-        return useResourcePackIcons() ? theme.resourcePackIcon() : theme.abilityTwoIcon();
+        return useResourcePackIcons() ? theme.statusResourcePackIcon() : theme.abilityTwoIcon();
     }
 
     private boolean useResourcePackIcons() {
@@ -321,7 +355,8 @@ public class ArcaneStatusBarManager {
     }
 
     private boolean isResourcePackIcon(char character) {
-        return character >= '\uE101' && character <= '\uE105';
+        return (character >= '\uE101' && character <= '\uE105')
+                || (character >= '\uE111' && character <= '\uE115');
     }
 
     private Key getIconFontKey() {
@@ -477,17 +512,18 @@ public class ArcaneStatusBarManager {
     }
 
     private enum ArcaneTheme {
-        BREEZE("breeze", "\u2726", "\u2601", NONE_ICON, "\uE103", ChatColor.WHITE),
-        FROST("frost", "\u2744", "\u2744", NONE_ICON, "\uE102", ChatColor.AQUA),
-        EMBER("ember", "\u2739", "\u2600", NONE_ICON, "\uE101", ChatColor.GOLD),
-        LUCK("luck", "\u2618", "\u2726", NONE_ICON, "\uE104", ChatColor.YELLOW),
-        VOID("void", "\u2727", "\u2604", "\u2620", "\uE105", ChatColor.DARK_PURPLE);
+        BREEZE("breeze", "\u2726", "\u2601", NONE_ICON, "\uE113", "\uE103", ChatColor.WHITE),
+        FROST("frost", "\u2744", "\u2744", NONE_ICON, "\uE112", "\uE102", ChatColor.AQUA),
+        EMBER("ember", "\u2739", "\u2600", NONE_ICON, "\uE111", "\uE101", ChatColor.GOLD),
+        LUCK("luck", "\u2618", "\u2726", NONE_ICON, "\uE114", "\uE104", ChatColor.YELLOW),
+        VOID("void", "\u2727", "\u2604", "\u2620", "\uE115", "\uE105", ChatColor.DARK_PURPLE);
 
         private final String key;
         private final String passiveIcon;
         private final String abilityOneIcon;
         private final String abilityTwoIcon;
-        private final String resourcePackIcon;
+        private final String passiveResourcePackIcon;
+        private final String statusResourcePackIcon;
         private final ChatColor passiveColor;
 
         ArcaneTheme(
@@ -495,14 +531,16 @@ public class ArcaneStatusBarManager {
                 String passiveIcon,
                 String abilityOneIcon,
                 String abilityTwoIcon,
-                String resourcePackIcon,
+                String passiveResourcePackIcon,
+                String statusResourcePackIcon,
                 ChatColor passiveColor
         ) {
             this.key = key;
             this.passiveIcon = passiveIcon;
             this.abilityOneIcon = abilityOneIcon;
             this.abilityTwoIcon = abilityTwoIcon;
-            this.resourcePackIcon = resourcePackIcon;
+            this.passiveResourcePackIcon = passiveResourcePackIcon;
+            this.statusResourcePackIcon = statusResourcePackIcon;
             this.passiveColor = passiveColor;
         }
 
@@ -527,8 +565,12 @@ public class ArcaneStatusBarManager {
             return abilityTwoIcon;
         }
 
-        private String resourcePackIcon() {
-            return resourcePackIcon;
+        private String passiveResourcePackIcon() {
+            return passiveResourcePackIcon;
+        }
+
+        private String statusResourcePackIcon() {
+            return statusResourcePackIcon;
         }
 
         private ChatColor passiveColor() {
