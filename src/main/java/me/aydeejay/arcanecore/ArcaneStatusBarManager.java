@@ -52,14 +52,16 @@ public class ArcaneStatusBarManager {
     }
 
     public void sendResourcePackIconTest(Player player) {
-        Component iconTest = Component.text("Arcane icon test: ", NamedTextColor.GRAY)
+        Component defaultFontTest = Component.text("Default font icon test: \uE101 \uE102 \uE103 \uE104 \uE105", NamedTextColor.GRAY);
+        Component configuredFontTest = Component.text("Configured font icon test: ", NamedTextColor.GRAY)
                 .append(Component.text("\uE101 \uE102 \uE103 \uE104 \uE105")
                         .font(getIconFontKey())
                         .color(NamedTextColor.WHITE))
                 .append(Component.text(" | fallback: \u2739 \u2744 \u2726 \u2618 \u2727", NamedTextColor.GRAY));
 
-        player.sendMessage(iconTest);
-        player.sendActionBar(iconTest);
+        player.sendMessage(defaultFontTest);
+        player.sendMessage(configuredFontTest);
+        player.sendActionBar(defaultFontTest);
     }
 
     private void updateAllPlayers() {
@@ -281,7 +283,6 @@ public class ArcaneStatusBarManager {
     private Component toActionBarComponent(String legacyMessage) {
         TextComponent.Builder builder = Component.text();
         NamedTextColor currentColor = NamedTextColor.WHITE;
-        Key iconFont = getIconFontKey();
 
         for (int index = 0; index < legacyMessage.length(); index++) {
             char character = legacyMessage.charAt(index);
@@ -301,18 +302,10 @@ public class ArcaneStatusBarManager {
             }
 
             Component characterComponent = Component.text(String.valueOf(character)).color(currentColor);
-            if (isResourcePackIcon(character)) {
-                characterComponent = characterComponent.font(iconFont);
-            }
-
             builder.append(characterComponent);
         }
 
         return builder.build();
-    }
-
-    private boolean isResourcePackIcon(char character) {
-        return character >= '\uE101' && character <= '\uE105';
     }
 
     private Key getIconFontKey() {

@@ -1,0 +1,39 @@
+{
+  "providers": [
+    {
+      "type": "bitmap",
+      "file": "arcanesmp:font/status/ember.png",
+      "ascent": 8,
+      "height": 8,
+      "chars": ["\uE101"]
+    },
+    {
+      "type": "bitmap",
+      "file": "arcanesmp:font/status/frost.png",
+      "ascent": 8,
+      "height": 8,
+      "chars": ["\uE102"]
+    },
+    {
+      "type": "bitmap",
+      "file": "arcanesmp:font/status/breeze.png",
+      "ascent": 8,
+      "height": 8,
+      "chars": ["\uE103"]
+    },
+    {
+      "type": "bitmap",
+      "file": "arcanesmp:font/status/luck.png",
+      "ascent": 8,
+      "height": 8,
+      "chars": ["\uE104"]
+    },
+    {
+      "type": "bitmap",
+      "file": "arcanesmp:font/status/void.png",
+      "ascent": 8,
+      "height": 8,
+      "chars": ["\uE105"]
+    }
+  ]
+}
