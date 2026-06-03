@@ -9,6 +9,7 @@ import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.ShadowColor;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -249,10 +250,6 @@ public class ArcaneStatusBarManager {
     }
 
     private String iconStatus(String icon, ChatColor textColor, String text) {
-        if (useResourcePackIcons() && isResourcePackIcon(icon)) {
-            return ChatColor.WHITE + icon + textColor + text;
-        }
-
         return textColor + icon + text;
     }
 
@@ -314,10 +311,17 @@ public class ArcaneStatusBarManager {
             }
 
             Component characterComponent = Component.text(String.valueOf(character)).color(currentColor);
+            if (isResourcePackIcon(character)) {
+                characterComponent = characterComponent.shadowColor(ShadowColor.none());
+            }
             builder.append(characterComponent);
         }
 
         return builder.build();
+    }
+
+    private boolean isResourcePackIcon(char character) {
+        return character >= '\uE101' && character <= '\uE105';
     }
 
     private Key getIconFontKey() {
