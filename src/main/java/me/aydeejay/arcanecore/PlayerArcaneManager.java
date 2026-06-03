@@ -48,6 +48,10 @@ public class PlayerArcaneManager {
     }
 
     public ItemStack createNormalArcane(String type) {
+        if (type == null) {
+            return null;
+        }
+
         return switch (type.toLowerCase()) {
             case "breeze" -> BreezeArcane.createItem();
             case "frost" -> FrostArcane.createItem();
@@ -86,10 +90,16 @@ public class PlayerArcaneManager {
         save();
     }
 
+    public void clearOwnedNormalArcane(Player player) {
+        owned.remove(player.getUniqueId());
+        save();
+    }
+
     public void removeAllNormalArcanes(Player player) {
-        for (ItemStack item : player.getInventory().getContents()) {
+        for (int slot = 0; slot < player.getInventory().getSize(); slot++) {
+            ItemStack item = player.getInventory().getItem(slot);
             if (isNormalArcane(item)) {
-                item.setAmount(0);
+                player.getInventory().setItem(slot, null);
             }
         }
 
@@ -97,6 +107,8 @@ public class PlayerArcaneManager {
         if (isNormalArcane(offhand)) {
             player.getInventory().setItemInOffHand(null);
         }
+
+        player.updateInventory();
     }
 
     public void giveOwnedArcane(Player player) {
@@ -123,6 +135,23 @@ public class PlayerArcaneManager {
         removeAllNormalArcanes(player);
         setOwnedNormalArcane(player, type);
         giveSingle(player, createNormalArcane(type));
+    }
+
+    public void resetPlayerArcanes(Player player) {
+        for (int slot = 0; slot < player.getInventory().getSize(); slot++) {
+            ItemStack item = player.getInventory().getItem(slot);
+            if (plugin.getArcaneManager().isAnyArcane(item)) {
+                player.getInventory().setItem(slot, null);
+            }
+        }
+
+        ItemStack offhand = player.getInventory().getItemInOffHand();
+        if (plugin.getArcaneManager().isAnyArcane(offhand)) {
+            player.getInventory().setItemInOffHand(null);
+        }
+
+        clearOwnedNormalArcane(player);
+        player.updateInventory();
     }
 
     // Soulbound items must never hit the ground. If the inventory is full the

@@ -46,7 +46,7 @@ public class TrustListener implements Listener {
 
             event.setCancelled(true);
 
-            attacker.sendActionBar(
+            attacker.sendMessage(
                     ChatColor.GREEN + "You cannot damage trusted players."
             );
         }

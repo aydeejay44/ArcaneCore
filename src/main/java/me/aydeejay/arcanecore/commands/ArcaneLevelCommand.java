@@ -1,7 +1,7 @@
 package me.aydeejay.arcanecore.commands;
 
 import me.aydeejay.arcanecore.ArcaneCore;
-import me.aydeejay.arcanecore.arcanes.VoidArcane;
+import me.aydeejay.arcanecore.ConfigValues;
 import me.aydeejay.arcanecore.gui.ArcaneMenuHolder;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -15,54 +15,24 @@ import me.aydeejay.arcanecore.arcanes.FrostArcane;
 import me.aydeejay.arcanecore.arcanes.EmberArcane;
 import me.aydeejay.arcanecore.arcanes.LuckArcane;
 import me.aydeejay.arcanecore.arcanes.VoidArcane;
-import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemFlag;
-import java.util.HashMap;
 import java.util.List;
 
-public class ArcaneLevelCommand implements CommandExecutor {
+public class ArcaneLevelCommand implements TabExecutor {
 
     private final ArcaneCore plugin;
+    private final ArcaneAdminCommand adminCommand;
 
     public ArcaneLevelCommand(ArcaneCore plugin) {
         this.plugin = plugin;
+        this.adminCommand = new ArcaneAdminCommand(plugin);
     }
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-
-        // Keep admin set command working
-        if (args.length == 4 && args[0].equalsIgnoreCase("admin") && args[1].equalsIgnoreCase("set")) {
-            if (!sender.hasPermission("arcanecore.admin")) {
-                sender.sendMessage(ChatColor.RED + "You do not have permission.");
-                return true;
-            }
-
-            Player target = Bukkit.getPlayer(args[2]);
-            if (target == null) {
-                sender.sendMessage(ChatColor.RED + "That player is not online.");
-                return true;
-            }
-
-            String arcane = args[3].toLowerCase();
-
-            if (arcane.equals("void")) {
-                giveItem(target, VoidArcane.createItem());
-                sender.sendMessage(ChatColor.GREEN + "Gave Void Arcane to " + target.getName() + ".");
-                return true;
-            }
-
-            ItemStack newArcane = plugin.getPlayerArcaneManager().createNormalArcane(arcane);
-            if (newArcane == null) {
-                sender.sendMessage(ChatColor.RED + "Use: breeze, frost, ember, luck, or void.");
-                return true;
-            }
-
-            plugin.getPlayerArcaneManager().replaceOwnedArcane(target, newArcane);
-
-            sender.sendMessage(ChatColor.GREEN + "Set " + target.getName() + "'s Arcane to " + arcane + ".");
-            return true;
+        if (args.length > 0 && args[0].equalsIgnoreCase("admin")) {
+            return adminCommand.handle(sender, args);
         }
 
         if (!(sender instanceof Player player)) {
@@ -72,6 +42,18 @@ public class ArcaneLevelCommand implements CommandExecutor {
 
         openArcaneGui(player);
         return true;
+    }
+
+    @Override
+    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+        if (args.length >= 1 && (args[0].equalsIgnoreCase("admin") || "admin".startsWith(args[0].toLowerCase()))) {
+            if (!sender.hasPermission("arcanecore.admin")) {
+                return List.of();
+            }
+            return adminCommand.tabComplete(args);
+        }
+
+        return List.of();
     }
 
     private void openArcaneGui(Player player) {
@@ -228,7 +210,7 @@ public class ArcaneLevelCommand implements CommandExecutor {
         voidMeta.setLore(List.of(
                 ChatColor.GRAY + "Separate from normal Arcanes",
                 ChatColor.GRAY + "Passive: "
-                        + plugin.getConfig().getInt("void.passive.extra-hearts", 5)
+                        + ConfigValues.getDouble(plugin, "void.passive.extra-hearts", 5.0, 0.0, 100.0)
                         + " extra hearts",
                 ChatColor.GRAY + "Ability: Void Flight",
                 ChatColor.GRAY + "Ability: Void Breath",
@@ -256,14 +238,6 @@ public class ArcaneLevelCommand implements CommandExecutor {
 
         item.setItemMeta(meta);
         return item;
-    }
-
-    private void giveItem(Player player, ItemStack item) {
-        HashMap<Integer, ItemStack> leftover = player.getInventory().addItem(item);
-
-        for (ItemStack leftoverItem : leftover.values()) {
-            player.getWorld().dropItemNaturally(player.getLocation(), leftoverItem);
-        }
     }
 
     private String cooldownText(Player player, String key) {

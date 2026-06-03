@@ -1,19 +1,15 @@
 package me.aydeejay.arcanecore;
 
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.HashMap;
 import java.util.UUID;
 
 public class CooldownManager {
 
-    private final ArcaneCore plugin;
     private final HashMap<String, Long> cooldowns = new HashMap<>();
 
     public CooldownManager(ArcaneCore plugin) {
-        this.plugin = plugin;
         plugin.getServer().getScheduler().runTaskTimer(plugin, this::clearExpired, 20L * 60, 20L * 60);
     }
 
@@ -33,6 +29,15 @@ public class CooldownManager {
     public void setCooldown(UUID uuid, String ability, int seconds) {
         String key = uuid + ":" + ability;
         cooldowns.put(key, System.currentTimeMillis() + seconds * 1000L);
+    }
+
+    public void clearCooldowns(UUID uuid) {
+        String prefix = uuid + ":";
+        cooldowns.keySet().removeIf(key -> key.startsWith(prefix));
+    }
+
+    public void clearAllCooldowns() {
+        cooldowns.clear();
     }
 
     public long getTimeLeft(UUID uuid, String ability) {
@@ -59,37 +64,10 @@ public class CooldownManager {
     }
 
     public void showCooldown(Player player, String abilityName, String abilityKey) {
-        long remainingMillis = getRemainingMillis(player.getUniqueId(), abilityKey);
-
-        if (remainingMillis <= 0) {
-            player.sendActionBar(ChatColor.GREEN + abilityName + " ready!");
-            return;
-        }
-
-        double seconds = remainingMillis / 1000.0;
-        player.sendActionBar(ChatColor.RED + abilityName + " cooldown: " + String.format("%.1f", seconds) + "s");
+        // Intentionally empty. ArcaneStatusBarManager owns all action-bar UI.
     }
 
     public void startActionBarCooldown(Player player, String abilityName, String abilityKey) {
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                if (!player.isOnline()) {
-                    cancel();
-                    return;
-                }
-
-                long remainingMillis = getRemainingMillis(player.getUniqueId(), abilityKey);
-
-                if (remainingMillis <= 0) {
-                    player.sendActionBar(ChatColor.GREEN + abilityName + " ready!");
-                    cancel();
-                    return;
-                }
-
-                double seconds = remainingMillis / 1000.0;
-                player.sendActionBar(ChatColor.RED + abilityName + " cooldown: " + String.format("%.1f", seconds) + "s");
-            }
-        }.runTaskTimer(plugin, 0L, 2L);
+        // Intentionally empty. The permanent status bar displays cooldowns.
     }
 }

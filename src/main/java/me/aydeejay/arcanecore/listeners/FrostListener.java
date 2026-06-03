@@ -1,6 +1,7 @@
 package me.aydeejay.arcanecore.listeners;
 
 import me.aydeejay.arcanecore.ArcaneCore;
+import me.aydeejay.arcanecore.ConfigValues;
 import me.aydeejay.arcanecore.arcanes.FrostArcane;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -42,15 +43,19 @@ public class FrostListener implements Listener {
                     if (plugin.getLevelManager().getLevel(player) <= 0) continue;
                     int level = plugin.getLevelManager().getLevel(player);
 
-                    int speedAmplifier = level >= 4 ? 1 : 0;
+                    String speedPath = level >= 4
+                            ? "frost.passive.speed-level.level-4"
+                            : "frost.passive.speed-level.level-3";
 
-                    player.addPotionEffect(new PotionEffect(
-                            PotionEffectType.SPEED,
-                            60,
-                            speedAmplifier,
-                            true,
-                            false
-                    ));
+                    if (ConfigValues.isPotionEnabled(plugin, speedPath, level >= 4 ? 2 : 1)) {
+                        player.addPotionEffect(new PotionEffect(
+                                PotionEffectType.SPEED,
+                                ConfigValues.getInt(plugin, "frost.passive.effect-duration-ticks", 60, 1, 6000),
+                                ConfigValues.getPotionAmplifier(plugin, speedPath, level >= 4 ? 2 : 1),
+                                true,
+                                false
+                        ));
+                    }
                 }
             }
         }, 0L, 20L);
@@ -76,7 +81,7 @@ public class FrostListener implements Listener {
         if (!FrostArcane.isFrostArcane(item)) return;
 
         if (!plugin.getLevelManager().canUseArcaneAbility(player)) {
-            player.sendActionBar(ChatColor.RED + "You unlock this ability at Level 3.");
+            player.sendMessage(ChatColor.RED + "You unlock this ability at Level 3.");
             event.setCancelled(true);
             return;
         }
@@ -95,8 +100,8 @@ public class FrostListener implements Listener {
         int level = plugin.getLevelManager().getLevel(player);
 
         int radius = level >= 4
-                ? plugin.getConfig().getInt("frost.radius.level-4", 10)
-                : plugin.getConfig().getInt("frost.radius.level-3", 5);
+                ? ConfigValues.getInt(plugin, "frost.radius.level-4", 10, 0, 100)
+                : ConfigValues.getInt(plugin, "frost.radius.level-3", 5, 0, 100);
 
         List<LivingEntity> targets = new ArrayList<>();
 
@@ -113,22 +118,22 @@ public class FrostListener implements Listener {
         }
 
         if (targets.isEmpty()) {
-            player.sendActionBar(ChatColor.RED + "No valid targets nearby.");
+            player.sendMessage(ChatColor.RED + "No valid targets nearby.");
             return;
         }
 
         int durationSeconds = level >= 4
-                ? plugin.getConfig().getInt("frost.freeze-duration.level-4", 3)
-                : plugin.getConfig().getInt("frost.freeze-duration.level-3", 3);
+                ? ConfigValues.getInt(plugin, "frost.freeze-duration.level-4", 3, 1, 600)
+                : ConfigValues.getInt(plugin, "frost.freeze-duration.level-3", 3, 1, 600);
 
         double totalDamage = level >= 4
-                ? plugin.getConfig().getDouble("frost.total-damage.level-4", 4.0)
-                : plugin.getConfig().getDouble("frost.total-damage.level-3", 0.0);
+                ? ConfigValues.getDouble(plugin, "frost.total-damage.level-4", 4.0, 0.0, 1000.0)
+                : ConfigValues.getDouble(plugin, "frost.total-damage.level-3", 0.0, 0.0, 1000.0);
 
         plugin.getCooldownManager().setCooldown(
                 player.getUniqueId(),
                 "frost",
-                plugin.getConfig().getInt("frost.cooldown-seconds", 75)
+                ConfigValues.getInt(plugin, "frost.cooldown-seconds", 75, 0, 86400)
         );
 
         plugin.getCooldownManager().startActionBarCooldown(player, "Frost", "frost");
@@ -138,7 +143,7 @@ public class FrostListener implements Listener {
         player.getWorld().spawnParticle(
                 Particle.SNOWFLAKE,
                 player.getLocation().add(0, 1, 0),
-                40,
+                ConfigValues.getInt(plugin, "frost.particles.cast-snowflake", 40, 0, 5000),
                 0.5,
                 0.5,
                 0.5,
@@ -150,11 +155,13 @@ public class FrostListener implements Listener {
                 playFrostRing(player, radius);
                 freezeTargets(player, targets, durationSeconds, totalDamage);
             }
-        }, 4L);
+        }, ConfigValues.getLong(plugin, "frost.particles.cast-delay-ticks", 4L, 0L, 200L));
     }
 
     private void playFrostRing(Player player, int radius) {
-        for (double angle = 0; angle < Math.PI * 2; angle += Math.PI / 24) {
+        int ringPoints = ConfigValues.getInt(plugin, "frost.particles.ring-points", 48, 1, 720);
+        for (int i = 0; i < ringPoints; i++) {
+            double angle = (Math.PI * 2 * i) / ringPoints;
             double x = Math.cos(angle) * radius;
             double z = Math.sin(angle) * radius;
 
@@ -163,7 +170,7 @@ public class FrostListener implements Listener {
             player.getWorld().spawnParticle(
                     Particle.SNOWFLAKE,
                     loc,
-                    4,
+                    ConfigValues.getInt(plugin, "frost.particles.ring-snowflake", 4, 0, 5000),
                     0.05,
                     0.05,
                     0.05,
@@ -173,7 +180,7 @@ public class FrostListener implements Listener {
             player.getWorld().spawnParticle(
                     Particle.ITEM_SNOWBALL,
                     loc,
-                    2,
+                    ConfigValues.getInt(plugin, "frost.particles.ring-snowball", 2, 0, 5000),
                     0.03,
                     0.03,
                     0.03,
@@ -196,23 +203,27 @@ public class FrostListener implements Listener {
                 targetPlayer.setVelocity(new Vector(0, 0, 0));
             }
 
-            target.addPotionEffect(new PotionEffect(
-                    PotionEffectType.SLOWNESS,
-                    durationSeconds * 20,
-                    254,
-                    true,
-                    false,
-                    false
-            ));
+            if (ConfigValues.isPotionEnabled(plugin, "frost.freeze-effects.slowness-level", 255)) {
+                target.addPotionEffect(new PotionEffect(
+                        PotionEffectType.SLOWNESS,
+                        durationSeconds * 20,
+                        ConfigValues.getPotionAmplifier(plugin, "frost.freeze-effects.slowness-level", 255),
+                        true,
+                        false,
+                        false
+                ));
+            }
 
-            target.addPotionEffect(new PotionEffect(
-                    PotionEffectType.JUMP_BOOST,
-                    durationSeconds * 20,
-                    128,
-                    true,
-                    false,
-                    false
-            ));
+            if (ConfigValues.isPotionEnabled(plugin, "frost.freeze-effects.jump-boost-level", 129)) {
+                target.addPotionEffect(new PotionEffect(
+                        PotionEffectType.JUMP_BOOST,
+                        durationSeconds * 20,
+                        ConfigValues.getPotionAmplifier(plugin, "frost.freeze-effects.jump-boost-level", 129),
+                        true,
+                        false,
+                        false
+                ));
+            }
 
             new BukkitRunnable() {
                 int ticks = durationSeconds;
@@ -233,7 +244,7 @@ public class FrostListener implements Listener {
                     target.getWorld().spawnParticle(
                             Particle.SNOWFLAKE,
                             target.getLocation().add(0, 1, 0),
-                            35,
+                            ConfigValues.getInt(plugin, "frost.particles.target-snowflake", 35, 0, 5000),
                             0.5,
                             1,
                             0.5,
@@ -243,7 +254,7 @@ public class FrostListener implements Listener {
                     target.getWorld().spawnParticle(
                             Particle.ITEM_SNOWBALL,
                             target.getLocation().add(0, 1, 0),
-                            20,
+                            ConfigValues.getInt(plugin, "frost.particles.target-snowball", 20, 0, 5000),
                             0.4,
                             0.8,
                             0.4,
@@ -272,6 +283,13 @@ public class FrostListener implements Listener {
                 }
             }.runTaskTimer(plugin, 0L, 20L);
         }
+    }
+
+    public void unfreeze(Player player) {
+        frozenPlayers.remove(player.getUniqueId());
+        player.setFreezeTicks(0);
+        player.removePotionEffect(PotionEffectType.SLOWNESS);
+        player.removePotionEffect(PotionEffectType.JUMP_BOOST);
     }
 
     @EventHandler

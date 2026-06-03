@@ -1,6 +1,7 @@
 package me.aydeejay.arcanecore.listeners;
 
 import me.aydeejay.arcanecore.ArcaneCore;
+import me.aydeejay.arcanecore.ConfigValues;
 import me.aydeejay.arcanecore.items.StrengthAxe;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
@@ -24,13 +25,15 @@ public class StrengthAxeListener implements Listener {
                         || StrengthAxe.isStrengthAxe(player.getInventory().getItemInOffHand());
 
                 if (hasAxe) {
-                    player.addPotionEffect(new PotionEffect(
-                            PotionEffectType.STRENGTH,
-                            60,
-                            0,
-                            true,
-                            false
-                    ));
+                    if (ConfigValues.isPotionEnabled(plugin, "custom-items.strength-axe.strength-level", 1)) {
+                        player.addPotionEffect(new PotionEffect(
+                                PotionEffectType.STRENGTH,
+                                ConfigValues.getInt(plugin, "custom-items.strength-axe.effect-duration-ticks", 60, 1, 6000),
+                                ConfigValues.getPotionAmplifier(plugin, "custom-items.strength-axe.strength-level", 1),
+                                true,
+                                false
+                        ));
+                    }
                 }
             }
         }, 0L, 20L);

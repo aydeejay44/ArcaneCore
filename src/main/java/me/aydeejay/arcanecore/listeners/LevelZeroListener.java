@@ -1,6 +1,7 @@
 package me.aydeejay.arcanecore.listeners;
 
 import me.aydeejay.arcanecore.ArcaneCore;
+import me.aydeejay.arcanecore.ConfigValues;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
 import org.bukkit.event.EventHandler;
@@ -34,7 +35,7 @@ public class LevelZeroListener implements Listener {
         }
 
         if (plugin.getLevelManager().getLevel(player) <= 0) {
-            event.setDamage(event.getDamage() * 0.65);
+            event.setDamage(event.getDamage() * ConfigValues.getDouble(plugin, "levels.level-zero-damage-multiplier", 0.65, 0.0, 10.0));
         }
     }
 }

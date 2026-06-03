@@ -30,14 +30,14 @@ public class LevelManager {
     }
 
     public void setLevel(Player player, int level) {
-        int maxLevel = plugin.getConfig().getInt("levels.max-level", 4);
+        int maxLevel = ConfigValues.getInt(plugin, "levels.max-level", 4, 0, 100);
         int cappedLevel = Math.max(0, Math.min(maxLevel, level));
         levels.put(player.getUniqueId(), cappedLevel);
         save();
     }
 
     public void addLevels(Player player, int amount) {
-        int maxLevel = plugin.getConfig().getInt("levels.max-level", 4);
+        int maxLevel = ConfigValues.getInt(plugin, "levels.max-level", 4, 0, 100);
 
         if (getLevel(player) >= maxLevel && amount > 0) {
             return;
@@ -56,7 +56,7 @@ public class LevelManager {
     }
 
     public boolean hasAbility(Player player) {
-        int unlockLevel = plugin.getConfig().getInt("levels.ability-unlock-level", 3);
+        int unlockLevel = ConfigValues.getInt(plugin, "levels.ability-unlock-level", 3, 0, 100);
         return getLevel(player) >= unlockLevel;
     }
 

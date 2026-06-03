@@ -1,6 +1,7 @@
 package me.aydeejay.arcanecore.listeners;
 
 import me.aydeejay.arcanecore.ArcaneCore;
+import me.aydeejay.arcanecore.ConfigValues;
 import me.aydeejay.arcanecore.arcanes.EmberArcane;
 import org.bukkit.Color;
 import org.bukkit.ChatColor;
@@ -40,13 +41,15 @@ public class EmberListener implements Listener {
                 if (!plugin.getArcaneManager().hasEmber(player)) continue;
                 if (plugin.getLevelManager().getLevel(player) <= 0) continue;
 
-                player.addPotionEffect(new PotionEffect(
-                        PotionEffectType.FIRE_RESISTANCE,
-                        60,
-                        0,
-                        true,
-                        false
-                ));
+                if (ConfigValues.isPotionEnabled(plugin, "ember.passive.fire-resistance-level", 1)) {
+                    player.addPotionEffect(new PotionEffect(
+                            PotionEffectType.FIRE_RESISTANCE,
+                            ConfigValues.getInt(plugin, "ember.passive.effect-duration-ticks", 60, 1, 6000),
+                            ConfigValues.getPotionAmplifier(plugin, "ember.passive.fire-resistance-level", 1),
+                            true,
+                            false
+                    ));
+                }
             }
         }, 0L, 20L);
     }
@@ -73,7 +76,7 @@ public class EmberListener implements Listener {
         event.setCancelled(true);
 
         if (!plugin.getLevelManager().canUseArcaneAbility(player)) {
-            player.sendActionBar(ChatColor.RED + "You unlock this ability at Level 3.");
+            player.sendMessage(ChatColor.RED + "You unlock this ability at Level 3.");
             return;
         }
 
@@ -90,30 +93,30 @@ public class EmberListener implements Listener {
         plugin.getCooldownManager().setCooldown(
                 player.getUniqueId(),
                 "ember",
-                plugin.getConfig().getInt("ember.cooldown-seconds", 120)
+                ConfigValues.getInt(plugin, "ember.cooldown-seconds", 120, 0, 86400)
         );
 
         plugin.getCooldownManager().startActionBarCooldown(player, "Ember", "ember");
 
         int level = plugin.getLevelManager().getLevel(player);
 
-        double range = plugin.getConfig().getDouble("ember.beam-range", 15);
-        double hitRadius = plugin.getConfig().getDouble("ember.hit-radius", 1.3);
+        double range = ConfigValues.getDouble(plugin, "ember.beam-range", 15.0, 0.0, 100.0);
+        double hitRadius = ConfigValues.getDouble(plugin, "ember.hit-radius", 1.3, 0.0, 20.0);
 
         int fireTicks = level >= 4
-                ? plugin.getConfig().getInt("ember.fire-ticks.level-4", 120)
-                : plugin.getConfig().getInt("ember.fire-ticks.level-3", 80);
+                ? ConfigValues.getInt(plugin, "ember.fire-ticks.level-4", 120, 0, 12000)
+                : ConfigValues.getInt(plugin, "ember.fire-ticks.level-3", 80, 0, 12000);
 
         double damage = level >= 4
-                ? plugin.getConfig().getDouble("ember.damage.level-4", 10.0)
-                : plugin.getConfig().getDouble("ember.damage.level-3", 8.0);
+                ? ConfigValues.getDouble(plugin, "ember.damage.level-4", 10.0, 0.0, 1000.0)
+                : ConfigValues.getDouble(plugin, "ember.damage.level-3", 8.0, 0.0, 1000.0);
 
         player.getWorld().playSound(player.getLocation(), Sound.ITEM_FIRECHARGE_USE, 1.0f, 0.8f);
 
         player.getWorld().spawnParticle(
                 Particle.FLAME,
                 player.getLocation().add(0, 1, 0),
-                45,
+                ConfigValues.getInt(plugin, "ember.particles.cast-flame", 45, 0, 5000),
                 0.45,
                 0.5,
                 0.45,
@@ -124,7 +127,7 @@ public class EmberListener implements Listener {
             if (player.isOnline()) {
                 shootBeam(player, range, hitRadius, fireTicks, damage);
             }
-        }, 6L);
+        }, ConfigValues.getLong(plugin, "ember.cast-delay-ticks", 6L, 0L, 200L));
     }
 
     private void shootBeam(Player player, double range, double hitRadius, int fireTicks, double damage) {
@@ -135,6 +138,8 @@ public class EmberListener implements Listener {
 
         new BukkitRunnable() {
             double distance = 0;
+            final double beamStep = ConfigValues.getDouble(plugin, "ember.beam-step", 0.35, 0.05, 5.0);
+            final int stepsPerTick = ConfigValues.getInt(plugin, "ember.beam-steps-per-tick", 4, 1, 100);
 
             @Override
             public void run() {
@@ -148,8 +153,8 @@ public class EmberListener implements Listener {
                     return;
                 }
 
-                for (int i = 0; i < 4; i++) {
-                    distance += 0.35;
+                for (int i = 0; i < stepsPerTick; i++) {
+                    distance += beamStep;
 
                     if (distance >= range) {
                         cancel();
@@ -188,7 +193,7 @@ public class EmberListener implements Listener {
                         target.getWorld().spawnParticle(
                                 Particle.FLAME,
                                 target.getLocation().add(0, 1, 0),
-                                35,
+                                ConfigValues.getInt(plugin, "ember.particles.hit-flame", 35, 0, 5000),
                                 0.5,
                                 0.8,
                                 0.5,
@@ -208,20 +213,23 @@ public class EmberListener implements Listener {
     }
 
     private void spawnEmberBeamParticles(Location point) {
-        point.getWorld().spawnParticle(Particle.FLAME, point, 16, 0.16, 0.16, 0.16, 0.02);
-        point.getWorld().spawnParticle(Particle.SMALL_FLAME, point, 10, 0.14, 0.14, 0.14, 0.02);
-        point.getWorld().spawnParticle(Particle.SMOKE, point, 8, 0.12, 0.12, 0.12, 0.015);
-        point.getWorld().spawnParticle(Particle.ASH, point, 5, 0.18, 0.18, 0.18, 0.01);
-        point.getWorld().spawnParticle(Particle.LAVA, point, 1, 0.05, 0.05, 0.05, 0);
+        point.getWorld().spawnParticle(Particle.FLAME, point, ConfigValues.getInt(plugin, "ember.particles.beam.flame", 16, 0, 5000), 0.16, 0.16, 0.16, 0.02);
+        point.getWorld().spawnParticle(Particle.SMALL_FLAME, point, ConfigValues.getInt(plugin, "ember.particles.beam.small-flame", 10, 0, 5000), 0.14, 0.14, 0.14, 0.02);
+        point.getWorld().spawnParticle(Particle.SMOKE, point, ConfigValues.getInt(plugin, "ember.particles.beam.smoke", 8, 0, 5000), 0.12, 0.12, 0.12, 0.015);
+        point.getWorld().spawnParticle(Particle.ASH, point, ConfigValues.getInt(plugin, "ember.particles.beam.ash", 5, 0, 5000), 0.18, 0.18, 0.18, 0.01);
+        point.getWorld().spawnParticle(Particle.LAVA, point, ConfigValues.getInt(plugin, "ember.particles.beam.lava", 1, 0, 5000), 0.05, 0.05, 0.05, 0);
         point.getWorld().spawnParticle(
                 Particle.DUST,
                 point,
-                8,
+                ConfigValues.getInt(plugin, "ember.particles.beam.dust", 8, 0, 5000),
                 0.10,
                 0.10,
                 0.10,
                 0,
-                new Particle.DustOptions(Color.fromRGB(255, 90, 20), 1.2f)
+                new Particle.DustOptions(
+                        Color.fromRGB(255, 90, 20),
+                        ConfigValues.getFloat(plugin, "ember.particles.beam.dust-size", 1.2f, 0.1f, 10.0f)
+                )
         );
     }
 
@@ -237,8 +245,8 @@ public class EmberListener implements Listener {
             return;
         }
 
-        knockback.normalize().multiply(0.4);
-        knockback.setY(0.12);
+        knockback.normalize().multiply(ConfigValues.getDouble(plugin, "ember.knockback.horizontal", 0.4, 0.0, 10.0));
+        knockback.setY(ConfigValues.getDouble(plugin, "ember.knockback.vertical", 0.12, 0.0, 10.0));
         target.setVelocity(target.getVelocity().add(knockback));
     }
 

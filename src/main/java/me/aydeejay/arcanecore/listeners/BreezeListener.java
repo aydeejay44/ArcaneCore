@@ -1,6 +1,7 @@
 package me.aydeejay.arcanecore.listeners;
 
 import me.aydeejay.arcanecore.ArcaneCore;
+import me.aydeejay.arcanecore.ConfigValues;
 import me.aydeejay.arcanecore.arcanes.BreezeArcane;
 import org.bukkit.ChatColor;
 import org.bukkit.Particle;
@@ -61,7 +62,7 @@ public class BreezeListener implements Listener {
         }
 
         if (!plugin.getLevelManager().canUseArcaneAbility(player)) {
-            player.sendActionBar(ChatColor.RED + "You unlock this ability at Level 3.");
+            player.sendMessage(ChatColor.RED + "You unlock this ability at Level 3.");
             event.setCancelled(true);
             return;
         }
@@ -82,7 +83,7 @@ public class BreezeListener implements Listener {
         plugin.getCooldownManager().setCooldown(
                 player.getUniqueId(),
                 "breeze",
-                plugin.getConfig().getInt("breeze.cooldown-seconds", 25)
+                ConfigValues.getInt(plugin, "breeze.cooldown-seconds", 25, 0, 86400)
         );
 
         plugin.getCooldownManager().startActionBarCooldown(player, "Breeze", "breeze");
@@ -92,18 +93,19 @@ public class BreezeListener implements Listener {
         double distance = 0.0;
 
         if (level >= 4) {
-            distance = plugin.getConfig().getDouble("breeze.dash-distance.level-4", 8.0);
+            distance = ConfigValues.getDouble(plugin, "breeze.dash-distance.level-4", 8.0, 0.0, 100.0);
         } else if (level >= 3) {
-            distance = plugin.getConfig().getDouble("breeze.dash-distance.level-3", 5.0);
+            distance = ConfigValues.getDouble(plugin, "breeze.dash-distance.level-3", 5.0, 0.0, 100.0);
         }
 
         Vector direction = player.getLocation()
                 .getDirection()
                 .normalize();
 
-        Vector velocity = direction.multiply(distance / 4.0);
+        double velocityDivisor = ConfigValues.getDouble(plugin, "breeze.velocity-divisor", 4.0, 0.1, 100.0);
+        Vector velocity = direction.multiply(distance / velocityDivisor);
 
-        velocity.setY(Math.max(0.25, velocity.getY()));
+        velocity.setY(Math.max(ConfigValues.getDouble(plugin, "breeze.min-y-velocity", 0.25, 0.0, 10.0), velocity.getY()));
 
         player.getWorld().playSound(
                 player.getLocation(),
@@ -115,7 +117,7 @@ public class BreezeListener implements Listener {
         player.getWorld().spawnParticle(
                 Particle.CLOUD,
                 player.getLocation(),
-                35,
+                ConfigValues.getInt(plugin, "breeze.particles.launch-cloud", 35, 0, 5000),
                 0.5,
                 0.2,
                 0.5,
@@ -125,7 +127,7 @@ public class BreezeListener implements Listener {
         player.getWorld().spawnParticle(
                 Particle.GUST,
                 player.getLocation(),
-                20,
+                ConfigValues.getInt(plugin, "breeze.particles.launch-gust", 20, 0, 5000),
                 0.4,
                 0.2,
                 0.4,
@@ -145,12 +147,12 @@ public class BreezeListener implements Listener {
                     return;
                 }
 
-                if (ticks >= 10 || player.isOnGround()) {
+                if (ticks >= ConfigValues.getInt(plugin, "breeze.trail-duration-ticks", 10, 1, 200) || player.isOnGround()) {
 
                     player.getWorld().spawnParticle(
                             Particle.CLOUD,
                             player.getLocation(),
-                            20,
+                            ConfigValues.getInt(plugin, "breeze.particles.landing-cloud", 20, 0, 5000),
                             0.3,
                             0.1,
                             0.3,
@@ -171,7 +173,7 @@ public class BreezeListener implements Listener {
                 player.getWorld().spawnParticle(
                         Particle.CLOUD,
                         player.getLocation(),
-                        6,
+                        ConfigValues.getInt(plugin, "breeze.particles.trail-cloud", 6, 0, 5000),
                         0.15,
                         0.15,
                         0.15,
@@ -181,7 +183,7 @@ public class BreezeListener implements Listener {
                 player.getWorld().spawnParticle(
                         Particle.GUST,
                         player.getLocation(),
-                        3,
+                        ConfigValues.getInt(plugin, "breeze.particles.trail-gust", 3, 0, 5000),
                         0.1,
                         0.1,
                         0.1,
@@ -217,8 +219,8 @@ public class BreezeListener implements Listener {
             org.bukkit.Location currentLocation = player.getLocation().clone();
             org.bukkit.Location previousLocation = lastLocation[0];
 
-            double hitRadius = plugin.getConfig().getDouble("breeze.hit-radius", 2.8);
-            double damage = plugin.getConfig().getDouble("breeze.dash-damage", 4.0);
+            double hitRadius = ConfigValues.getDouble(plugin, "breeze.hit-radius", 2.8, 0.0, 20.0);
+            double damage = ConfigValues.getDouble(plugin, "breeze.dash-damage", 4.0, 0.0, 1000.0);
 
             Vector travel = currentLocation.toVector().subtract(previousLocation.toVector());
             int steps = Math.max(1, (int) Math.ceil(travel.length() * 2));
@@ -272,16 +274,16 @@ public class BreezeListener implements Listener {
                     Vector knockback = target.getLocation().toVector()
                             .subtract(player.getLocation().toVector())
                             .normalize()
-                            .multiply(0.8);
+                            .multiply(ConfigValues.getDouble(plugin, "breeze.knockback.horizontal", 0.8, 0.0, 10.0));
 
-                    knockback.setY(0.25);
+                    knockback.setY(ConfigValues.getDouble(plugin, "breeze.knockback.vertical", 0.25, 0.0, 10.0));
 
                     target.setVelocity(knockback);
 
                     target.getWorld().spawnParticle(
                             Particle.CLOUD,
                             target.getLocation(),
-                            25,
+                            ConfigValues.getInt(plugin, "breeze.particles.hit-cloud", 25, 0, 5000),
                             0.4,
                             0.8,
                             0.4,
@@ -318,12 +320,12 @@ public class BreezeListener implements Listener {
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
             dashingPlayers.remove(dasherId);
             hitPlayers.remove(dasherId);
-        }, plugin.getConfig().getLong("breeze.damage-window-ticks", 30L));
+        }, ConfigValues.getLong(plugin, "breeze.damage-window-ticks", 30L, 1L, 12000L));
 
         player.getWorld().spawnParticle(
                 Particle.CLOUD,
                 player.getLocation(),
-                35,
+                ConfigValues.getInt(plugin, "breeze.particles.finish-cloud", 35, 0, 5000),
                 0.4,
                 0.4,
                 0.4,

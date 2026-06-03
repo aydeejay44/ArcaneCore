@@ -45,6 +45,7 @@ import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.PluginCommand;
+import org.bukkit.command.TabCompleter;
 import org.bukkit.event.Listener;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.Recipe;
@@ -61,6 +62,7 @@ public class ArcaneCore extends JavaPlugin {
     private ArcaneManager arcaneManager;
     private AbilityTriggerManager abilityTriggerManager;
     private PlayerArcaneManager playerArcaneManager;
+    private ArcaneStatusBarManager statusBarManager;
 
     // Single registered listener instances. Ability triggers (slot / swap /
     // plugin-message paths) reuse these so shared state (dash tracking,
@@ -76,6 +78,10 @@ public class ArcaneCore extends JavaPlugin {
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        reloadConfig();
+        getConfig().options().copyDefaults(true);
+        saveConfig();
+        reloadConfig();
 
         trustManager = new TrustManager(this);
         trustManager.load();
@@ -85,6 +91,7 @@ public class ArcaneCore extends JavaPlugin {
         arcaneManager = new ArcaneManager();
         abilityTriggerManager = new AbilityTriggerManager(this);
         playerArcaneManager = new PlayerArcaneManager(this);
+        statusBarManager = new ArcaneStatusBarManager(this);
 
         // Ability listeners first so the plugin-message channel can reuse them.
         breezeListener = new BreezeListener(this);
@@ -130,12 +137,16 @@ public class ArcaneCore extends JavaPlugin {
 
         registerRecipes();
         registerCommands();
+        statusBarManager.start();
 
         getLogger().info("ArcaneCore enabled!");
     }
 
     @Override
     public void onDisable() {
+        if (statusBarManager != null) {
+            statusBarManager.shutdown();
+        }
         if (voidListener != null) {
             voidListener.shutdown();
         }
@@ -186,6 +197,9 @@ public class ArcaneCore extends JavaPlugin {
             return;
         }
         command.setExecutor(executor);
+        if (executor instanceof TabCompleter tabCompleter) {
+            command.setTabCompleter(tabCompleter);
+        }
     }
 
     private void registerRecipes() {
@@ -293,5 +307,13 @@ public class ArcaneCore extends JavaPlugin {
 
     public VoidListener getVoidListener() {
         return voidListener;
+    }
+
+    public BonusHealthListener getBonusHealthListener() {
+        return bonusHealthListener;
+    }
+
+    public ArcaneStatusBarManager getStatusBarManager() {
+        return statusBarManager;
     }
 }

@@ -1,6 +1,7 @@
 package me.aydeejay.arcanecore.listeners;
 
 import me.aydeejay.arcanecore.ArcaneCore;
+import me.aydeejay.arcanecore.ConfigValues;
 import me.aydeejay.arcanecore.arcanes.VoidArcane;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
@@ -48,7 +49,7 @@ public class VoidListener implements Listener {
                 player.getWorld().spawnParticle(
                         Particle.PORTAL,
                         player.getLocation().add(0, 1, 0),
-                        2,
+                        ConfigValues.getInt(plugin, "void.particles.passive-portal", 2, 0, 5000),
                         0.25,
                         0.4,
                         0.25,
@@ -58,7 +59,7 @@ public class VoidListener implements Listener {
                 player.getWorld().spawnParticle(
                         Particle.SCULK_SOUL,
                         player.getLocation().add(0, 1, 0),
-                        1,
+                        ConfigValues.getInt(plugin, "void.particles.passive-sculk-soul", 1, 0, 5000),
                         0.2,
                         0.3,
                         0.2,
@@ -80,7 +81,7 @@ public class VoidListener implements Listener {
         plugin.getCooldownManager().setCooldown(
                 player.getUniqueId(),
                 "void_flight",
-                plugin.getConfig().getInt("void.flight.cooldown-seconds", 30)
+                ConfigValues.getInt(plugin, "void.flight.cooldown-seconds", 30, 0, 86400)
         );
         plugin.getCooldownManager().startActionBarCooldown(player, "Void Flight", "void_flight");
 
@@ -93,14 +94,14 @@ public class VoidListener implements Listener {
         Vector launch = player.getLocation()
                 .getDirection()
                 .normalize()
-                .multiply(plugin.getConfig().getDouble("void.flight.launch-strength", 1.6));
+                .multiply(ConfigValues.getDouble(plugin, "void.flight.launch-strength", 1.6, 0.0, 20.0));
 
-        launch.setY(Math.max(0.6, launch.getY()));
+        launch.setY(Math.max(ConfigValues.getDouble(plugin, "void.flight.min-y-velocity", 0.6, 0.0, 10.0), launch.getY()));
 
         player.getWorld().spawnParticle(
                 Particle.PORTAL,
                 player.getLocation(),
-                6,
+                ConfigValues.getInt(plugin, "void.particles.flight-launch-portal", 6, 0, 5000),
                 0.2,
                 0.2,
                 0.2,
@@ -110,7 +111,7 @@ public class VoidListener implements Listener {
         player.getWorld().spawnParticle(
                 Particle.SMOKE,
                 player.getLocation(),
-                3,
+                ConfigValues.getInt(plugin, "void.particles.flight-launch-smoke", 3, 0, 5000),
                 0.1,
                 0.1,
                 0.1,
@@ -120,14 +121,14 @@ public class VoidListener implements Listener {
         player.setVelocity(launch);
         player.setAllowFlight(true);
         player.setFlying(true);
-        player.setFlySpeed((float) plugin.getConfig().getDouble("void.flight.fly-speed", 0.22));
+        player.setFlySpeed(ConfigValues.getFloat(plugin, "void.flight.fly-speed", 0.22f, -1.0f, 1.0f));
 
         player.sendMessage(ChatColor.DARK_PURPLE + "Void Flight activated!");
 
         player.getWorld().spawnParticle(
                 Particle.PORTAL,
                 player.getLocation(),
-                100,
+                ConfigValues.getInt(plugin, "void.particles.flight-burst-portal", 100, 0, 5000),
                 0.7,
                 1,
                 0.7,
@@ -146,7 +147,7 @@ public class VoidListener implements Listener {
 
             player.sendMessage(ChatColor.GRAY + "Void Flight ended.");
 
-        }, plugin.getConfig().getInt("void.flight.duration-seconds", 3) * 20L);
+        }, ConfigValues.getInt(plugin, "void.flight.duration-seconds", 3, 1, 600) * 20L);
     }
 
     @EventHandler
@@ -159,7 +160,7 @@ public class VoidListener implements Listener {
         endFlight(event.getEntity());
     }
 
-    private void endFlight(Player player) {
+    public void endFlight(Player player) {
         FlightState state = activeFlights.remove(player.getUniqueId());
         if (state != null) {
             restoreFlightState(player, state);
@@ -202,9 +203,9 @@ public class VoidListener implements Listener {
             return;
         }
 
-        int durationTicks = Math.max(1, plugin.getConfig().getInt("void.breath.duration-ticks", 60));
-        int pulseIntervalTicks = 10;
-        double totalDamage = plugin.getConfig().getDouble("void.breath.total-damage", 12.0);
+        int durationTicks = ConfigValues.getInt(plugin, "void.breath.duration-ticks", 60, 1, 12000);
+        int pulseIntervalTicks = ConfigValues.getInt(plugin, "void.breath.pulse-interval-ticks", 10, 1, 12000);
+        double totalDamage = ConfigValues.getDouble(plugin, "void.breath.total-damage", 12.0, 0.0, 1000.0);
         int damagePulses = Math.max(1, (int) Math.ceil(durationTicks / (double) pulseIntervalTicks));
         double damagePerPulse = totalDamage / damagePulses;
 
@@ -229,24 +230,26 @@ public class VoidListener implements Listener {
                 rightBase.normalize();
             }
 
-            int range = plugin.getConfig().getInt("void.breath.range", 10);
-            double maxWidth = plugin.getConfig().getDouble("void.breath.max-width", 6.0);
+            int range = ConfigValues.getInt(plugin, "void.breath.range", 10, 1, 100);
+            double maxWidth = ConfigValues.getDouble(plugin, "void.breath.max-width", 6.0, 0.0, 100.0);
+            double pointSpacing = ConfigValues.getDouble(plugin, "void.breath.point-spacing", 0.35, 0.05, 5.0);
+            double hitRadius = ConfigValues.getDouble(plugin, "void.breath.hit-radius", 1.2, 0.0, 20.0);
 
             for (int distance = 1; distance <= range; distance++) {
 
                 double width = (distance / (double) range) * maxWidth;
 
-                for (double side = -width; side <= width; side += 0.35) {
+                for (double side = -width; side <= width; side += pointSpacing) {
 
                     Location point = start.clone()
                             .add(direction.clone().multiply(distance))
                             .add(rightBase.clone().multiply(side));
 
-                    player.getWorld().spawnParticle(Particle.WITCH, point, 18, 0.08, 0.08, 0.08, 0.02);
-                    player.getWorld().spawnParticle(Particle.REVERSE_PORTAL, point, 10, 0.05, 0.05, 0.05, 0.04);
-                    player.getWorld().spawnParticle(Particle.SMOKE, point, 6, 0.06, 0.06, 0.06, 0.01);
+                    player.getWorld().spawnParticle(Particle.WITCH, point, ConfigValues.getInt(plugin, "void.particles.breath-witch", 18, 0, 5000), 0.08, 0.08, 0.08, 0.02);
+                    player.getWorld().spawnParticle(Particle.REVERSE_PORTAL, point, ConfigValues.getInt(plugin, "void.particles.breath-reverse-portal", 10, 0, 5000), 0.05, 0.05, 0.05, 0.04);
+                    player.getWorld().spawnParticle(Particle.SMOKE, point, ConfigValues.getInt(plugin, "void.particles.breath-smoke", 6, 0, 5000), 0.06, 0.06, 0.06, 0.01);
 
-                    for (LivingEntity target : point.getNearbyLivingEntities(1.2)) {
+                    for (LivingEntity target : point.getNearbyLivingEntities(hitRadius)) {
 
                         if (target.equals(player)) continue;
 
@@ -287,7 +290,7 @@ public class VoidListener implements Listener {
         plugin.getCooldownManager().setCooldown(
                 player.getUniqueId(),
                 "void_breath",
-                plugin.getConfig().getInt("void.breath.cooldown-seconds", 60)
+                ConfigValues.getInt(plugin, "void.breath.cooldown-seconds", 60, 0, 86400)
         );
 
         plugin.getCooldownManager().startActionBarCooldown(player, "Void Breath", "void_breath");
@@ -301,8 +304,8 @@ public class VoidListener implements Listener {
             return;
         }
 
-        knockback.normalize().multiply(0.25);
-        knockback.setY(0.06);
+        knockback.normalize().multiply(ConfigValues.getDouble(plugin, "void.breath.knockback.horizontal", 0.25, 0.0, 10.0));
+        knockback.setY(ConfigValues.getDouble(plugin, "void.breath.knockback.vertical", 0.06, 0.0, 10.0));
         target.setVelocity(target.getVelocity().add(knockback));
     }
 
@@ -371,7 +374,7 @@ public class VoidListener implements Listener {
         event.setCancelled(true);
 
         if (!plugin.getLevelManager().canUseArcaneAbility(player)) {
-            player.sendActionBar(ChatColor.RED + "You unlock this ability at Level 3.");
+            player.sendMessage(ChatColor.RED + "You unlock this ability at Level 3.");
             return;
         }
 
@@ -400,7 +403,7 @@ public class VoidListener implements Listener {
         event.setCancelled(true);
 
         if (!plugin.getLevelManager().canUseArcaneAbility(player)) {
-            player.sendActionBar(ChatColor.RED + "You unlock this ability at Level 3.");
+            player.sendMessage(ChatColor.RED + "You unlock this ability at Level 3.");
             return;
         }
 

@@ -44,11 +44,11 @@ public class AbilityPluginMessageListener implements PluginMessageListener {
 
         if (messageType.equalsIgnoreCase("void_flight")) {
             if (!VoidArcane.isVoidArcane(item)) {
-                player.sendActionBar(ChatColor.RED + "Hold the Void Arcane to use Void Flight.");
+                player.sendMessage(ChatColor.RED + "Hold the Void Arcane to use Void Flight.");
                 return;
             }
             if (!plugin.getLevelManager().canUseArcaneAbility(player)) {
-                player.sendActionBar(ChatColor.RED + "You unlock this ability at Level 3.");
+                player.sendMessage(ChatColor.RED + "You unlock this ability at Level 3.");
                 return;
             }
             plugin.getVoidListener().activateVoidFlight(player);
@@ -57,11 +57,11 @@ public class AbilityPluginMessageListener implements PluginMessageListener {
 
         if (messageType.equalsIgnoreCase("void_breath")) {
             if (!VoidArcane.isVoidArcane(item)) {
-                player.sendActionBar(ChatColor.RED + "Hold the Void Arcane to use Void Breath.");
+                player.sendMessage(ChatColor.RED + "Hold the Void Arcane to use Void Breath.");
                 return;
             }
             if (!plugin.getLevelManager().canUseArcaneAbility(player)) {
-                player.sendActionBar(ChatColor.RED + "You unlock this ability at Level 3.");
+                player.sendMessage(ChatColor.RED + "You unlock this ability at Level 3.");
                 return;
             }
             plugin.getVoidListener().activateVoidBreath(player);
@@ -69,12 +69,12 @@ public class AbilityPluginMessageListener implements PluginMessageListener {
         }
 
         if (!plugin.getArcaneManager().isAnyArcane(item)) {
-            player.sendActionBar(ChatColor.RED + "Hold an Arcane to use its ability.");
+            player.sendMessage(ChatColor.RED + "Hold an Arcane to use its ability.");
             return;
         }
 
         if (!plugin.getLevelManager().canUseArcaneAbility(player)) {
-            player.sendActionBar(ChatColor.RED + "You unlock this ability at Level 3.");
+            player.sendMessage(ChatColor.RED + "You unlock this ability at Level 3.");
             return;
         }
 

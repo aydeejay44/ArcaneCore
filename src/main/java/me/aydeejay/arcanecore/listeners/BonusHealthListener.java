@@ -1,6 +1,7 @@
 package me.aydeejay.arcanecore.listeners;
 
 import me.aydeejay.arcanecore.ArcaneCore;
+import me.aydeejay.arcanecore.ConfigValues;
 import me.aydeejay.arcanecore.items.HeartHelmet;
 import org.bukkit.NamespacedKey;
 import org.bukkit.attribute.Attribute;
@@ -42,12 +43,13 @@ public class BonusHealthListener implements Listener {
         double bonus = 0.0;
 
         if (HeartHelmet.isHeartHelmet(player.getInventory().getHelmet())) {
-            bonus += 5.0 * HEALTH_PER_HEART;
+            double helmetHearts = ConfigValues.getDouble(plugin, "custom-items.heart-helmet.bonus-hearts", 5.0, 0.0, 100.0);
+            bonus += helmetHearts * HEALTH_PER_HEART;
         }
 
         if (plugin.getLevelManager().getLevel(player) > 0) {
             if (plugin.getArcaneManager().hasVoid(player)) {
-                double voidExtraHearts = Math.max(0.0, plugin.getConfig().getDouble("void.passive.extra-hearts", 5.0));
+                double voidExtraHearts = ConfigValues.getDouble(plugin, "void.passive.extra-hearts", 5.0, 0.0, 100.0);
                 bonus += voidExtraHearts * HEALTH_PER_HEART;
             }
         }
@@ -63,6 +65,10 @@ public class BonusHealthListener implements Listener {
         }
 
         capHealth(player, attr);
+    }
+
+    public void refreshPlayer(Player player) {
+        applyBonusHealth(player);
     }
 
     public void shutdown() {

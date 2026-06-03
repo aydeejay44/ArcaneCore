@@ -31,7 +31,7 @@ public class ArcaneAbilityCommand implements CommandExecutor {
         ItemStack item = player.getInventory().getItemInMainHand();
 
         if (!plugin.getLevelManager().canUseArcaneAbility(player)) {
-            player.sendActionBar(ChatColor.RED + "You unlock this ability at Level 3.");
+            player.sendMessage(ChatColor.RED + "You unlock this ability at Level 3.");
             return true;
         }
 
@@ -60,7 +60,7 @@ public class ArcaneAbilityCommand implements CommandExecutor {
             return true;
         }
 
-        player.sendActionBar(ChatColor.RED + "Hold an Arcane to use its ability.");
+        player.sendMessage(ChatColor.RED + "Hold an Arcane to use its ability.");
         return true;
     }
 }

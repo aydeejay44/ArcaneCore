@@ -1,6 +1,7 @@
 package me.aydeejay.arcanecore.listeners;
 
 import me.aydeejay.arcanecore.ArcaneCore;
+import me.aydeejay.arcanecore.ConfigValues;
 import me.aydeejay.arcanecore.arcanes.*;
 import me.aydeejay.arcanecore.gui.TraderMenuHolder;
 import me.aydeejay.arcanecore.items.TraderItem;
@@ -185,11 +186,19 @@ public class TraderListener implements Listener {
 
         player.sendMessage(ChatColor.LIGHT_PURPLE + "The Trader gave you: " + rewardName);
         player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
-        player.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING, player.getLocation().add(0, 1, 0), 100, 0.8, 1, 0.8, 0.4);
+        player.getWorld().spawnParticle(
+                Particle.TOTEM_OF_UNDYING,
+                player.getLocation().add(0, 1, 0),
+                ConfigValues.getInt(plugin, "trader.reward-particles", 100, 0, 5000),
+                0.8,
+                1,
+                0.8,
+                0.4
+        );
     }
 
     private int getChance(String arcane) {
-        return Math.max(0, plugin.getConfig().getInt("trader-chances." + arcane, 25));
+        return ConfigValues.getInt(plugin, "trader-chances." + arcane, 25, 0, 1_000_000);
     }
 
     private boolean hasConfiguredTraderChance(Player player) {
@@ -220,6 +229,9 @@ public class TraderListener implements Listener {
 
         player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1f, 1f);
 
+        int animationTicks = ConfigValues.getInt(plugin, "trader.animation-ticks", 30, 1, 1000);
+        long animationPeriodTicks = ConfigValues.getLong(plugin, "trader.animation-period-ticks", 2L, 1L, 200L);
+
         new BukkitRunnable() {
             int ticks = 0;
 
@@ -248,7 +260,7 @@ public class TraderListener implements Listener {
 
                 ticks++;
 
-                if (ticks >= 30) {
+                if (ticks >= animationTicks) {
                     cancel();
 
                     ItemStack trader = findTrader(player);
@@ -273,7 +285,7 @@ public class TraderListener implements Listener {
                     player.closeInventory();
                 }
             }
-        }.runTaskTimer(plugin, 0L, 2L);
+        }.runTaskTimer(plugin, 0L, animationPeriodTicks);
     }
 
     @EventHandler

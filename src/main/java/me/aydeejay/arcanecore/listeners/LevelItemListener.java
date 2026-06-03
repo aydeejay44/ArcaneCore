@@ -1,6 +1,7 @@
 package me.aydeejay.arcanecore.listeners;
 
 import me.aydeejay.arcanecore.ArcaneCore;
+import me.aydeejay.arcanecore.ConfigValues;
 import me.aydeejay.arcanecore.items.LevelItem;
 import org.bukkit.ChatColor;
 import org.bukkit.Sound;
@@ -33,7 +34,7 @@ public class LevelItemListener implements Listener {
 
         event.setCancelled(true);
 
-        int maxLevel = plugin.getConfig().getInt("levels.max-level", 4);
+        int maxLevel = ConfigValues.getInt(plugin, "levels.max-level", 4, 0, 100);
         if (plugin.getLevelManager().getLevel(player) >= maxLevel) {
             player.sendMessage(ChatColor.RED + "You are already at the max Arcane Level.");
             return;

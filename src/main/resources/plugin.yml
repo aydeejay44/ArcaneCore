@@ -6,8 +6,8 @@ author: Aydeejay
 
 commands:
   arcane:
-    description: Opens your Arcane GUI
-    usage: /arcane
+    description: Opens your Arcane GUI or runs Arcane admin commands
+    usage: /arcane [admin]
   givebreeze:
       description: Gives you the Breeze Arcane
       permission: arcanecore.admin
@@ -80,3 +80,8 @@ commands:
     description: Gives the Strength Axe
     permission: arcanecore.admin
     permission-message: You do not have permission to use this command.
+
+permissions:
+  arcanecore.admin:
+    description: Allows use of ArcaneCore admin commands
+    default: op

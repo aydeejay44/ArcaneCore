@@ -1,13 +1,13 @@
 package me.aydeejay.arcanecore.listeners;
 
 import me.aydeejay.arcanecore.ArcaneCore;
+import me.aydeejay.arcanecore.ConfigValues;
 import me.aydeejay.arcanecore.items.HasteLeggings;
 import me.aydeejay.arcanecore.items.HeartHelmet;
 import me.aydeejay.arcanecore.items.ResistanceChestplate;
 import me.aydeejay.arcanecore.items.SpeedBoots;
 import org.bukkit.Color;
 import org.bukkit.Particle;
-import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.inventory.ItemStack;
@@ -49,11 +49,14 @@ public class CustomArmorListener implements Listener {
                     player.getWorld().spawnParticle(
                             Particle.DUST,
                             player.getLocation().add(0, 2.1, 0),
-                            8,
+                            ConfigValues.getInt(plugin, "custom-items.heart-helmet.particles.dust", 8, 0, 1000),
                             0.3,
                             0.3,
                             0.3,
-                            new Particle.DustOptions(Color.RED, 1.4f)
+                            new Particle.DustOptions(
+                                    Color.RED,
+                                    ConfigValues.getFloat(plugin, "custom-items.heart-helmet.particles.dust-size", 1.4f, 0.1f, 10.0f)
+                            )
                     );
 
                 }
@@ -62,18 +65,20 @@ public class CustomArmorListener implements Listener {
 
                 if (ResistanceChestplate.isResistanceChestplate(chestplate)) {
 
-                    player.addPotionEffect(new PotionEffect(
-                            PotionEffectType.RESISTANCE,
-                            60,
-                            0,
-                            true,
-                            false
-                    ));
+                    if (ConfigValues.isPotionEnabled(plugin, "custom-items.resistance-chestplate.resistance-level", 1)) {
+                        player.addPotionEffect(new PotionEffect(
+                                PotionEffectType.RESISTANCE,
+                                ConfigValues.getInt(plugin, "custom-items.resistance-chestplate.effect-duration-ticks", 60, 1, 6000),
+                                ConfigValues.getPotionAmplifier(plugin, "custom-items.resistance-chestplate.resistance-level", 1),
+                                true,
+                                false
+                        ));
+                    }
 
                     player.getWorld().spawnParticle(
                             Particle.PORTAL,
                             player.getLocation().add(0, 1, 0),
-                            12,
+                            ConfigValues.getInt(plugin, "custom-items.resistance-chestplate.particles.portal", 12, 0, 1000),
                             0.35,
                             0.6,
                             0.35,
@@ -85,18 +90,20 @@ public class CustomArmorListener implements Listener {
 
                 if (HasteLeggings.isHasteLeggings(leggings)) {
 
-                    player.addPotionEffect(new PotionEffect(
-                            PotionEffectType.HASTE,
-                            60,
-                            1,
-                            true,
-                            false
-                    ));
+                    if (ConfigValues.isPotionEnabled(plugin, "custom-items.haste-leggings.haste-level", 2)) {
+                        player.addPotionEffect(new PotionEffect(
+                                PotionEffectType.HASTE,
+                                ConfigValues.getInt(plugin, "custom-items.haste-leggings.effect-duration-ticks", 60, 1, 6000),
+                                ConfigValues.getPotionAmplifier(plugin, "custom-items.haste-leggings.haste-level", 2),
+                                true,
+                                false
+                        ));
+                    }
 
                     player.getWorld().spawnParticle(
                             Particle.HAPPY_VILLAGER,
                             player.getLocation().add(0, 0.7, 0),
-                            8,
+                            ConfigValues.getInt(plugin, "custom-items.haste-leggings.particles.happy-villager", 8, 0, 1000),
                             0.35,
                             0.4,
                             0.35,
@@ -108,18 +115,20 @@ public class CustomArmorListener implements Listener {
 
                 if (SpeedBoots.isSpeedBoots(boots)) {
 
-                    player.addPotionEffect(new PotionEffect(
-                            PotionEffectType.SPEED,
-                            60,
-                            2,
-                            true,
-                            false
-                    ));
+                    if (ConfigValues.isPotionEnabled(plugin, "custom-items.speed-boots.speed-level", 3)) {
+                        player.addPotionEffect(new PotionEffect(
+                                PotionEffectType.SPEED,
+                                ConfigValues.getInt(plugin, "custom-items.speed-boots.effect-duration-ticks", 60, 1, 6000),
+                                ConfigValues.getPotionAmplifier(plugin, "custom-items.speed-boots.speed-level", 3),
+                                true,
+                                false
+                        ));
+                    }
 
                     player.getWorld().spawnParticle(
                             Particle.CLOUD,
                             player.getLocation().add(0, 0.1, 0),
-                            10,
+                            ConfigValues.getInt(plugin, "custom-items.speed-boots.particles.cloud", 10, 0, 1000),
                             0.25,
                             0.05,
                             0.25,
@@ -129,11 +138,14 @@ public class CustomArmorListener implements Listener {
                     player.getWorld().spawnParticle(
                             Particle.DUST,
                             player.getLocation().add(0, 0.1, 0),
-                            6,
+                            ConfigValues.getInt(plugin, "custom-items.speed-boots.particles.dust", 6, 0, 1000),
                             0.2,
                             0.05,
                             0.2,
-                            new Particle.DustOptions(Color.AQUA, 1.2f)
+                            new Particle.DustOptions(
+                                    Color.AQUA,
+                                    ConfigValues.getFloat(plugin, "custom-items.speed-boots.particles.dust-size", 1.2f, 0.1f, 10.0f)
+                            )
                     );
                 }
 

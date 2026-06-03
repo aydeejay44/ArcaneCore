@@ -1,11 +1,26 @@
 # ArcaneCore configuration.
-# Player data (levels, trusts, owned arcanes) is stored separately in
-# levels.yml / trusts.yml / arcanes.yml and is NOT kept in this file.
+# Player data is stored separately in levels.yml / trusts.yml / arcanes.yml.
+# Damage values use Minecraft health points: 2.0 health = 1 heart.
+# Potion levels use the visible in-game level: 1 = level I, 2 = level II, 0 = disabled.
 
+# Level rules.
 levels:
   max-level: 4
   ability-unlock-level: 3
+  level-zero-damage-multiplier: 0.65
 
+# Permanent Arcane status bar above the hotbar.
+status-bar:
+  enabled: true
+  update-ticks: 10
+  style: arcane
+  resource-pack-icons: true
+  resource-pack-font: arcanesmp:status
+  short-labels: true
+  single-arcane-compact: true
+  compact-dual-style: true
+
+# Breeze Arcane balance.
 breeze:
   cooldown-seconds: 25
   dash-distance:
@@ -14,16 +29,43 @@ breeze:
   dash-damage: 4.0
   hit-radius: 2.8
   damage-window-ticks: 30
+  velocity-divisor: 4.0
+  min-y-velocity: 0.25
+  trail-duration-ticks: 10
+  knockback:
+    horizontal: 0.8
+    vertical: 0.25
+  particles:
+    launch-cloud: 35
+    launch-gust: 20
+    trail-cloud: 6
+    trail-gust: 3
+    landing-cloud: 20
+    hit-cloud: 25
+    finish-cloud: 35
 
+# Luck Arcane balance.
 luck:
   cooldown-seconds: 60
   active-hits: 5
   negates:
     level-3: 2
     level-4: 3
+  passive:
+    hero-level: 10
+    effect-duration-ticks: 60
+  particles:
+    lucky-save: 20
+    activate: 40
 
+# Frost Arcane balance.
 frost:
   cooldown-seconds: 75
+  passive:
+    speed-level:
+      level-3: 1
+      level-4: 2
+    effect-duration-ticks: 60
   radius:
     level-3: 5
     level-4: 10
@@ -33,10 +75,28 @@ frost:
   total-damage:
     level-3: 0.0
     level-4: 4.0
+  freeze-effects:
+    slowness-level: 255
+    jump-boost-level: 129
+  particles:
+    cast-delay-ticks: 4
+    cast-snowflake: 40
+    ring-points: 48
+    ring-snowflake: 4
+    ring-snowball: 2
+    target-snowflake: 35
+    target-snowball: 20
 
+# Ember Arcane balance.
 ember:
   cooldown-seconds: 120
+  passive:
+    fire-resistance-level: 1
+    effect-duration-ticks: 60
   beam-range: 15
+  cast-delay-ticks: 6
+  beam-step: 0.35
+  beam-steps-per-tick: 4
   hit-radius: 1.3
   fire-ticks:
     level-3: 80
@@ -44,22 +104,105 @@ ember:
   damage:
     level-3: 8.0
     level-4: 10.0
+  knockback:
+    horizontal: 0.4
+    vertical: 0.12
+  particles:
+    cast-flame: 45
+    hit-flame: 35
+    beam:
+      flame: 16
+      small-flame: 10
+      smoke: 8
+      ash: 5
+      lava: 1
+      dust: 8
+      dust-size: 1.2
 
+# Void Arcane balance.
 void:
   passive:
     extra-hearts: 5
   flight:
     launch-strength: 1.6
+    min-y-velocity: 0.6
     fly-speed: 0.22
     duration-seconds: 3
     cooldown-seconds: 30
   breath:
     duration-ticks: 60
+    pulse-interval-ticks: 10
     total-damage: 12.0
     range: 10
     max-width: 6.0
+    point-spacing: 0.35
+    hit-radius: 1.2
     cooldown-seconds: 60
+    knockback:
+      horizontal: 0.25
+      vertical: 0.06
+  particles:
+    passive-portal: 2
+    passive-sculk-soul: 1
+    flight-launch-portal: 6
+    flight-launch-smoke: 3
+    flight-burst-portal: 100
+    breath-witch: 18
+    breath-reverse-portal: 10
+    breath-smoke: 6
 
+# Custom armor and weapon balance.
+custom-items:
+  heart-helmet:
+    bonus-hearts: 5
+    particles:
+      dust: 8
+      dust-size: 1.4
+  resistance-chestplate:
+    resistance-level: 1
+    effect-duration-ticks: 60
+    particles:
+      portal: 12
+  haste-leggings:
+    haste-level: 2
+    effect-duration-ticks: 60
+    particles:
+      happy-villager: 8
+  speed-boots:
+    speed-level: 3
+    effect-duration-ticks: 60
+    particles:
+      cloud: 10
+      dust: 6
+      dust-size: 1.2
+  strength-axe:
+    strength-level: 1
+    effect-duration-ticks: 60
+
+# Cosmetic kill effect particle amounts.
+kill-effects:
+  breeze:
+    cloud: 45
+    sweep-attack: 8
+  frost:
+    snowflake: 60
+    snowball: 25
+  ember:
+    flame: 55
+    smoke: 35
+  luck:
+    happy-villager: 45
+  void:
+    portal: 80
+    sculk-soul: 25
+
+# Trader GUI balance and particles.
+trader:
+  animation-ticks: 30
+  animation-period-ticks: 2
+  reward-particles: 100
+
+# Trader reward weights. These do not need to add up to 100.
 trader-chances:
   breeze: 25
   frost: 25

@@ -39,7 +39,7 @@ public class AbilitySwapListener implements Listener {
         event.setCancelled(true);
 
         if (!plugin.getLevelManager().canUseArcaneAbility(player)) {
-            player.sendActionBar(ChatColor.RED + "You unlock this ability at Level 3.");
+            player.sendMessage(ChatColor.RED + "You unlock this ability at Level 3.");
             return;
         }
 

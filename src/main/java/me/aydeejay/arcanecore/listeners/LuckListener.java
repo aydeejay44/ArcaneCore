@@ -1,6 +1,7 @@
 package me.aydeejay.arcanecore.listeners;
 
 import me.aydeejay.arcanecore.ArcaneCore;
+import me.aydeejay.arcanecore.ConfigValues;
 import me.aydeejay.arcanecore.arcanes.LuckArcane;
 import org.bukkit.ChatColor;
 import org.bukkit.Particle;
@@ -68,7 +69,7 @@ public class LuckListener implements Listener {
         }
 
         if (!plugin.getLevelManager().canUseArcaneAbility(player)) {
-            player.sendActionBar(ChatColor.RED + "You unlock this ability at Level 3.");
+            player.sendMessage(ChatColor.RED + "You unlock this ability at Level 3.");
             event.setCancelled(true);
             return;
         }
@@ -120,7 +121,7 @@ public class LuckListener implements Listener {
                 player.getWorld().spawnParticle(
                         Particle.TOTEM_OF_UNDYING,
                         player.getLocation(),
-                        20,
+                        ConfigValues.getInt(plugin, "luck.particles.lucky-save", 20, 0, 5000),
                         0.4,
                         1,
                         0.4,
@@ -155,9 +156,9 @@ public class LuckListener implements Listener {
         int negates = 0;
 
         if (level >= 4) {
-            negates = plugin.getConfig().getInt("luck.negates.level-4", 3);
+            negates = ConfigValues.getInt(plugin, "luck.negates.level-4", 3, 0, 1000);
         } else if (level >= 3) {
-            negates = plugin.getConfig().getInt("luck.negates.level-3", 2);
+            negates = ConfigValues.getInt(plugin, "luck.negates.level-3", 2, 0, 1000);
         }
 
         if (plugin.getCooldownManager().isOnCooldown(player.getUniqueId(), "luck")) {
@@ -171,7 +172,7 @@ public class LuckListener implements Listener {
             return;
         }
 
-        remainingHits.put(player.getUniqueId(), plugin.getConfig().getInt("luck.active-hits", 5));
+        remainingHits.put(player.getUniqueId(), ConfigValues.getInt(plugin, "luck.active-hits", 5, 1, 1000));
         remainingNegates.put(player.getUniqueId(), negates);
 
         player.sendMessage(ChatColor.GREEN + "Lucky Protection activated!");
@@ -179,7 +180,7 @@ public class LuckListener implements Listener {
         player.getWorld().spawnParticle(
                 Particle.HAPPY_VILLAGER,
                 player.getLocation(),
-                40,
+                ConfigValues.getInt(plugin, "luck.particles.activate", 40, 0, 5000),
                 0.5,
                 1,
                 0.5,
@@ -196,7 +197,7 @@ public class LuckListener implements Listener {
         plugin.getCooldownManager().setCooldown(
                 player.getUniqueId(),
                 "luck",
-                plugin.getConfig().getInt("luck.cooldown-seconds", 60)
+                ConfigValues.getInt(plugin, "luck.cooldown-seconds", 60, 0, 86400)
         );
 
         plugin.getCooldownManager().startActionBarCooldown(player, "Luck", "luck");
@@ -226,13 +227,15 @@ public class LuckListener implements Listener {
                 if (plugin.getArcaneManager().hasLuck(player)) {
                     if (plugin.getLevelManager().getLevel(player) <= 0) continue;
 
-                    player.addPotionEffect(new PotionEffect(
-                            PotionEffectType.HERO_OF_THE_VILLAGE,
-                            60,
-                            9,
-                            true,
-                            false
-                    ));
+                    if (ConfigValues.isPotionEnabled(plugin, "luck.passive.hero-level", 10)) {
+                        player.addPotionEffect(new PotionEffect(
+                                PotionEffectType.HERO_OF_THE_VILLAGE,
+                                ConfigValues.getInt(plugin, "luck.passive.effect-duration-ticks", 60, 1, 6000),
+                                ConfigValues.getPotionAmplifier(plugin, "luck.passive.hero-level", 10),
+                                true,
+                                false
+                        ));
+                    }
 
                 }
             }
