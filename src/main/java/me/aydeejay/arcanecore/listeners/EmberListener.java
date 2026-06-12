@@ -278,7 +278,23 @@ public class EmberListener implements Listener {
         target.setKiller(source);
         target.setLastDamage(finalDamage);
         target.setLastDamageCause(damageEvent);
-        target.setHealth(Math.max(0.0, target.getHealth() - finalDamage));
+
+        // Drain absorption hearts before touching real health.
+        double remaining = finalDamage;
+        double absorption = target.getAbsorptionAmount();
+        if (absorption > 0) {
+            if (remaining <= absorption) {
+                target.setAbsorptionAmount(absorption - remaining);
+                remaining = 0;
+            } else {
+                target.setAbsorptionAmount(0);
+                remaining -= absorption;
+            }
+        }
+
+        if (remaining > 0) {
+            target.setHealth(Math.max(0.0, target.getHealth() - remaining));
+        }
         return true;
     }
 }
