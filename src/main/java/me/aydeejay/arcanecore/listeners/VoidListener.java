@@ -29,8 +29,11 @@ import java.util.UUID;
 
 public class VoidListener implements Listener {
 
+    private static final int PASSIVE_TASK_PERIOD_TICKS = 20;
+
     private final ArcaneCore plugin;
     private final Map<UUID, FlightState> activeFlights = new HashMap<>();
+    private int passiveParticleCooldownTicks;
 
     private record FlightState(boolean allowFlight, boolean flying, float flySpeed) {
     }
@@ -41,6 +44,10 @@ public class VoidListener implements Listener {
 
     public void startPassiveTask() {
         plugin.getServer().getScheduler().runTaskTimer(plugin, () -> {
+            if (!shouldSpawnPassiveParticles()) {
+                return;
+            }
+
             for (Player player : plugin.getServer().getOnlinePlayers()) {
 
                 if (!plugin.getArcaneManager().hasVoid(player)) continue;
@@ -49,7 +56,7 @@ public class VoidListener implements Listener {
                 player.getWorld().spawnParticle(
                         Particle.PORTAL,
                         player.getLocation().add(0, 1, 0),
-                        ConfigValues.getInt(plugin, "void.particles.passive-portal", 2, 0, 5000),
+                        ConfigValues.getInt(plugin, "void.particles.passive-portal", 1, 0, 5000),
                         0.25,
                         0.4,
                         0.25,
@@ -66,7 +73,7 @@ public class VoidListener implements Listener {
                         0
                 );
             }
-        }, 0L, 20L);
+        }, 0L, PASSIVE_TASK_PERIOD_TICKS);
     }
 
     public void activateVoidFlight(Player player) {
@@ -101,7 +108,7 @@ public class VoidListener implements Listener {
         player.getWorld().spawnParticle(
                 Particle.PORTAL,
                 player.getLocation(),
-                ConfigValues.getInt(plugin, "void.particles.flight-launch-portal", 6, 0, 5000),
+                ConfigValues.getInt(plugin, "void.particles.flight-launch-portal", 3, 0, 5000),
                 0.2,
                 0.2,
                 0.2,
@@ -111,7 +118,7 @@ public class VoidListener implements Listener {
         player.getWorld().spawnParticle(
                 Particle.SMOKE,
                 player.getLocation(),
-                ConfigValues.getInt(plugin, "void.particles.flight-launch-smoke", 3, 0, 5000),
+                ConfigValues.getInt(plugin, "void.particles.flight-launch-smoke", 1, 0, 5000),
                 0.1,
                 0.1,
                 0.1,
@@ -128,7 +135,7 @@ public class VoidListener implements Listener {
         player.getWorld().spawnParticle(
                 Particle.PORTAL,
                 player.getLocation(),
-                ConfigValues.getInt(plugin, "void.particles.flight-burst-portal", 100, 0, 5000),
+                ConfigValues.getInt(plugin, "void.particles.flight-burst-portal", 25, 0, 5000),
                 0.7,
                 1,
                 0.7,
@@ -205,11 +212,13 @@ public class VoidListener implements Listener {
 
         int durationTicks = ConfigValues.getInt(plugin, "void.breath.duration-ticks", 60, 1, 12000);
         int pulseIntervalTicks = ConfigValues.getInt(plugin, "void.breath.pulse-interval-ticks", 10, 1, 12000);
+        int breathParticleIntervalTicks = ConfigValues.getInt(plugin, "void.particles.breath-interval-ticks", 20, 0, 12000);
         double totalDamage = ConfigValues.getDouble(plugin, "void.breath.total-damage", 12.0, 0.0, 1000.0);
         int damagePulses = Math.max(1, (int) Math.ceil(durationTicks / (double) pulseIntervalTicks));
         double damagePerPulse = totalDamage / damagePulses;
 
         final int[] elapsedTicks = {0};
+        final int[] breathParticleCooldownTicks = {0};
         HashSet<UUID> recentlyHit = new HashSet<>();
 
         player.sendMessage(ChatColor.DARK_PURPLE + "Void Breath unleashed!");
@@ -234,6 +243,11 @@ public class VoidListener implements Listener {
             double maxWidth = ConfigValues.getDouble(plugin, "void.breath.max-width", 6.0, 0.0, 100.0);
             double pointSpacing = ConfigValues.getDouble(plugin, "void.breath.point-spacing", 0.35, 0.05, 5.0);
             double hitRadius = ConfigValues.getDouble(plugin, "void.breath.hit-radius", 1.2, 0.0, 20.0);
+            boolean spawnBreathParticles = breathParticleIntervalTicks > 0 && breathParticleCooldownTicks[0] <= 0;
+
+            if (spawnBreathParticles) {
+                breathParticleCooldownTicks[0] = Math.max(pulseIntervalTicks, breathParticleIntervalTicks);
+            }
 
             for (int distance = 1; distance <= range; distance++) {
 
@@ -245,9 +259,11 @@ public class VoidListener implements Listener {
                             .add(direction.clone().multiply(distance))
                             .add(rightBase.clone().multiply(side));
 
-                    player.getWorld().spawnParticle(Particle.WITCH, point, ConfigValues.getInt(plugin, "void.particles.breath-witch", 18, 0, 5000), 0.08, 0.08, 0.08, 0.02);
-                    player.getWorld().spawnParticle(Particle.REVERSE_PORTAL, point, ConfigValues.getInt(plugin, "void.particles.breath-reverse-portal", 10, 0, 5000), 0.05, 0.05, 0.05, 0.04);
-                    player.getWorld().spawnParticle(Particle.SMOKE, point, ConfigValues.getInt(plugin, "void.particles.breath-smoke", 6, 0, 5000), 0.06, 0.06, 0.06, 0.01);
+                    if (spawnBreathParticles) {
+                        player.getWorld().spawnParticle(Particle.WITCH, point, ConfigValues.getInt(plugin, "void.particles.breath-witch", 4, 0, 5000), 0.08, 0.08, 0.08, 0.02);
+                        player.getWorld().spawnParticle(Particle.REVERSE_PORTAL, point, ConfigValues.getInt(plugin, "void.particles.breath-reverse-portal", 3, 0, 5000), 0.05, 0.05, 0.05, 0.04);
+                        player.getWorld().spawnParticle(Particle.SMOKE, point, ConfigValues.getInt(plugin, "void.particles.breath-smoke", 1, 0, 5000), 0.06, 0.06, 0.06, 0.01);
+                    }
 
                     for (LivingEntity target : point.getNearbyLivingEntities(hitRadius)) {
 
@@ -280,6 +296,7 @@ public class VoidListener implements Listener {
 
             recentlyHit.clear();
             elapsedTicks[0] += pulseIntervalTicks;
+            breathParticleCooldownTicks[0] = Math.max(0, breathParticleCooldownTicks[0] - pulseIntervalTicks);
 
             if (elapsedTicks[0] >= durationTicks) {
                 task.cancel();
@@ -294,6 +311,21 @@ public class VoidListener implements Listener {
         );
 
         plugin.getCooldownManager().startActionBarCooldown(player, "Void Breath", "void_breath");
+    }
+
+    private boolean shouldSpawnPassiveParticles() {
+        int intervalTicks = ConfigValues.getInt(plugin, "void.particles.passive-interval-ticks", 80, 0, 12000);
+        if (intervalTicks <= 0) {
+            return false;
+        }
+
+        if (passiveParticleCooldownTicks > 0) {
+            passiveParticleCooldownTicks = Math.max(0, passiveParticleCooldownTicks - PASSIVE_TASK_PERIOD_TICKS);
+            return false;
+        }
+
+        passiveParticleCooldownTicks = Math.max(PASSIVE_TASK_PERIOD_TICKS, intervalTicks) - PASSIVE_TASK_PERIOD_TICKS;
+        return true;
     }
 
     private void applyVoidBreathKnockback(LivingEntity target, Vector direction) {

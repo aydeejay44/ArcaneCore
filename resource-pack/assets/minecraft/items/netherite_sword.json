@@ -1,18 +1,18 @@
 {
   "model": {
-    "type": "range_dispatch",
-    "property": "custom_model_data",
+    "type": "minecraft:range_dispatch",
+    "property": "minecraft:custom_model_data",
     "entries": [
       {
         "threshold": 1001,
         "model": {
-          "type": "model",
+          "type": "minecraft:model",
           "model": "minecraft:item/warden_blade"
         }
       }
     ],
     "fallback": {
-      "type": "model",
+      "type": "minecraft:model",
       "model": "minecraft:item/netherite_sword"
     }
   }

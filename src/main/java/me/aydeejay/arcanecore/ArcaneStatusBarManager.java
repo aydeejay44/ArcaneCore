@@ -53,19 +53,21 @@ public class ArcaneStatusBarManager {
     }
 
     public void sendResourcePackIconTest(Player player) {
-        Component defaultFontTest = Component.text("Ability mask icon test: \uE101 \uE102 \uE103 \uE104 \uE105", NamedTextColor.GRAY);
-        Component passiveFontTest = Component.text("Passive full-color icon test: ", NamedTextColor.GRAY)
-                .append(Component.text("\uE111 \uE112 \uE113 \uE114 \uE115", NamedTextColor.WHITE));
-        Component configuredFontTest = Component.text("Configured font icon test: ", NamedTextColor.GRAY)
-                .append(Component.text("\uE101 \uE102 \uE103 \uE104 \uE105 | \uE111 \uE112 \uE113 \uE114 \uE115")
-                        .font(getIconFontKey())
-                        .color(NamedTextColor.WHITE))
-                .append(Component.text(" | fallback: \u2739 \u2744 \u2726 \u2618 \u2727", NamedTextColor.GRAY));
+        Key iconFont = getIconFontKey();
+        Component statusIcons = Component.text("\uE101 \uE102 \uE103 \uE104 \uE105", NamedTextColor.WHITE)
+                .font(iconFont)
+                .shadowColor(ShadowColor.none());
+        Component passiveIcons = Component.text("\uE111 \uE112 \uE113 \uE114 \uE115", NamedTextColor.WHITE)
+                .font(iconFont)
+                .shadowColor(ShadowColor.none());
 
-        player.sendMessage(defaultFontTest);
-        player.sendMessage(passiveFontTest);
-        player.sendMessage(configuredFontTest);
-        player.sendActionBar(defaultFontTest);
+        player.sendMessage(Component.text("Status mask icon test: ", NamedTextColor.GRAY)
+                .append(statusIcons)
+                .append(Component.text(" | fallback: \u2739 \u2744 \u2726 \u2618 \u2727", NamedTextColor.GRAY)));
+        player.sendMessage(Component.text("Passive full-color icon test: ", NamedTextColor.GRAY)
+                .append(passiveIcons));
+        player.sendActionBar(Component.text("Action bar icon test: ", NamedTextColor.GRAY)
+                .append(statusIcons));
     }
 
     private void updateAllPlayers() {
@@ -326,6 +328,7 @@ public class ArcaneStatusBarManager {
     private Component toActionBarComponent(String legacyMessage) {
         TextComponent.Builder builder = Component.text();
         NamedTextColor currentColor = NamedTextColor.WHITE;
+        Key iconFont = getIconFontKey();
 
         for (int index = 0; index < legacyMessage.length(); index++) {
             char character = legacyMessage.charAt(index);
@@ -346,7 +349,9 @@ public class ArcaneStatusBarManager {
 
             Component characterComponent = Component.text(String.valueOf(character)).color(currentColor);
             if (isResourcePackIcon(character)) {
-                characterComponent = characterComponent.shadowColor(ShadowColor.none());
+                characterComponent = characterComponent
+                        .font(iconFont)
+                        .shadowColor(ShadowColor.none());
             }
             builder.append(characterComponent);
         }

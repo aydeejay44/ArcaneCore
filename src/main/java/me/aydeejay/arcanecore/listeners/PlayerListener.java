@@ -1,5 +1,6 @@
 package me.aydeejay.arcanecore.listeners;
 
+import io.papermc.paper.event.player.PlayerTradeEvent;
 import me.aydeejay.arcanecore.ArcaneCore;
 import me.aydeejay.arcanecore.arcanes.LuckArcane;
 import me.aydeejay.arcanecore.items.LevelItem;
@@ -8,6 +9,7 @@ import org.bukkit.Material;
 import org.bukkit.block.DecoratedPot;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityPickupItemEvent;
@@ -17,6 +19,7 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.inventory.InventoryMoveItemEvent;
 import org.bukkit.event.inventory.InventoryType;
+import org.bukkit.event.inventory.TradeSelectEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -26,6 +29,9 @@ import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.ItemStack;
 
 public class PlayerListener implements Listener {
+
+    private static final int MERCHANT_INPUT_SLOT_ONE = 0;
+    private static final int MERCHANT_INPUT_SLOT_TWO = 1;
 
     private final ArcaneCore plugin;
 
@@ -140,9 +146,26 @@ public class PlayerListener implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onArcaneTrade(InventoryClickEvent event) {
         if (event.getInventory().getType() != InventoryType.MERCHANT) return;
+
+        if (event.getWhoClicked() instanceof Player player) {
+            scheduleMerchantLuckCleanup(player, event.getInventory());
+        }
+
+        if (merchantHasLuckArcaneInput(event.getInventory())) {
+            event.setCancelled(true);
+            if (event.getWhoClicked() instanceof Player player) {
+                returnLuckArcaneFromMerchantInputs(player, event.getInventory());
+            }
+            return;
+        }
+
+        if (isMerchantInputSlot(event.getRawSlot()) && LuckArcane.isLuckArcane(event.getCursor())) {
+            event.setCancelled(true);
+            return;
+        }
 
         if (LuckArcane.isLuckArcane(event.getCurrentItem())
                 || LuckArcane.isLuckArcane(event.getCursor())) {
@@ -162,6 +185,71 @@ public class PlayerListener implements Listener {
                 event.setCancelled(true);
             }
         }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onLuckArcaneTradeSelect(TradeSelectEvent event) {
+        if (!(event.getWhoClicked() instanceof Player player)) {
+            return;
+        }
+
+        scheduleMerchantLuckCleanup(player, event.getInventory());
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onLuckArcanePlayerTrade(PlayerTradeEvent event) {
+        Inventory topInventory = event.getPlayer().getOpenInventory().getTopInventory();
+        if (topInventory.getType() != InventoryType.MERCHANT || !merchantHasLuckArcaneInput(topInventory)) {
+            return;
+        }
+
+        event.setCancelled(true);
+        returnLuckArcaneFromMerchantInputs(event.getPlayer(), topInventory);
+    }
+
+    private boolean isMerchantInputSlot(int rawSlot) {
+        return rawSlot == MERCHANT_INPUT_SLOT_ONE || rawSlot == MERCHANT_INPUT_SLOT_TWO;
+    }
+
+    private boolean merchantHasLuckArcaneInput(Inventory inventory) {
+        return inventory != null
+                && inventory.getType() == InventoryType.MERCHANT
+                && (LuckArcane.isLuckArcane(inventory.getItem(MERCHANT_INPUT_SLOT_ONE))
+                || LuckArcane.isLuckArcane(inventory.getItem(MERCHANT_INPUT_SLOT_TWO)));
+    }
+
+    private void scheduleMerchantLuckCleanup(Player player, Inventory merchantInventory) {
+        plugin.getServer().getScheduler().runTask(plugin, () -> {
+            if (player.isOnline()) {
+                returnLuckArcaneFromMerchantInputs(player, merchantInventory);
+            }
+        });
+    }
+
+    private void returnLuckArcaneFromMerchantInputs(Player player, Inventory merchantInventory) {
+        if (merchantInventory == null || merchantInventory.getType() != InventoryType.MERCHANT) {
+            return;
+        }
+
+        boolean returned = returnLuckArcaneFromMerchantSlot(player, merchantInventory, MERCHANT_INPUT_SLOT_ONE);
+        returned |= returnLuckArcaneFromMerchantSlot(player, merchantInventory, MERCHANT_INPUT_SLOT_TWO);
+
+        if (returned) {
+            player.updateInventory();
+        }
+    }
+
+    private boolean returnLuckArcaneFromMerchantSlot(Player player, Inventory merchantInventory, int slot) {
+        ItemStack item = merchantInventory.getItem(slot);
+        if (!LuckArcane.isLuckArcane(item)) {
+            return false;
+        }
+
+        merchantInventory.setItem(slot, null);
+        for (ItemStack leftover : player.getInventory().addItem(item).values()) {
+            player.getWorld().dropItemNaturally(player.getLocation(), leftover);
+        }
+        return true;
     }
 
     @EventHandler

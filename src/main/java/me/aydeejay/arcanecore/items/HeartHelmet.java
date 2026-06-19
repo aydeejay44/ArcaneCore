@@ -4,25 +4,30 @@ import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.ChatColor;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ArmorMeta;
-import org.bukkit.inventory.meta.trim.ArmorTrim;
-import org.bukkit.inventory.meta.trim.TrimMaterial;
-import org.bukkit.inventory.meta.trim.TrimPattern;
+import org.bukkit.inventory.meta.components.EquippableComponent;
 import org.bukkit.persistence.PersistentDataType;
 
 public class HeartHelmet {
 
     private static final NamespacedKey KEY = NamespacedKey.fromString("arcanecore:heart_helmet");
+    private static final NamespacedKey MODEL_KEY = NamespacedKey.fromString("arcanesmp:the_crown");
 
     public static ItemStack create() {
         ItemStack item = new ItemStack(Material.NETHERITE_HELMET);
         ArmorMeta meta = (ArmorMeta) item.getItemMeta();
 
-        meta.setDisplayName(ChatColor.RED + "Heart Helmet");
+        meta.setDisplayName(ChatColor.YELLOW + "The Crown");
+        meta.setItemModel(MODEL_KEY);
         meta.setUnbreakable(true);
-        meta.setTrim(new ArmorTrim(TrimMaterial.QUARTZ, TrimPattern.FLOW));
+
+        EquippableComponent equippable = meta.getEquippable();
+        equippable.setSlot(EquipmentSlot.HEAD);
+        equippable.setModel(MODEL_KEY);
+        meta.setEquippable(equippable);
 
         meta.addEnchant(Enchantment.PROTECTION, 3, true);
         meta.addEnchant(Enchantment.RESPIRATION, 3, true);
@@ -42,7 +47,7 @@ public class HeartHelmet {
                 item,
                 Material.NETHERITE_HELMET,
                 KEY,
-                "Heart Helmet"
+                "The Crown"
         );
     }
 }
