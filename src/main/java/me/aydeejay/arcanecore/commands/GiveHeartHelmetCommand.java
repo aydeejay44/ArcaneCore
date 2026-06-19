@@ -13,7 +13,7 @@ public class GiveHeartHelmetCommand implements CommandExecutor {
         if (!(sender instanceof Player player)) return true;
 
         player.getInventory().addItem(HeartHelmet.create());
-        player.sendMessage(ChatColor.RED + "You received the Heart Helmet.");
+        player.sendMessage(ChatColor.YELLOW + "You received The Crown.");
         return true;
     }
 }

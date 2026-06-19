@@ -108,8 +108,8 @@ public class EmberListener implements Listener {
                 : ConfigValues.getInt(plugin, "ember.fire-ticks.level-3", 80, 0, 12000);
 
         double damage = level >= 4
-                ? ConfigValues.getDouble(plugin, "ember.damage.level-4", 10.0, 0.0, 1000.0)
-                : ConfigValues.getDouble(plugin, "ember.damage.level-3", 8.0, 0.0, 1000.0);
+                ? ConfigValues.getDouble(plugin, "ember.damage.level-4", 8.0, 0.0, 1000.0)
+                : ConfigValues.getDouble(plugin, "ember.damage.level-3", 6.0, 0.0, 1000.0);
 
         player.getWorld().playSound(player.getLocation(), Sound.ITEM_FIRECHARGE_USE, 1.0f, 0.8f);
 
@@ -269,16 +269,31 @@ public class EmberListener implements Listener {
             return false;
         }
 
-        double finalDamage = Math.max(0.0, damageEvent.getFinalDamage());
-        if (finalDamage <= 0) {
+        double appliedDamage = Math.max(0.0, damage);
+        if (appliedDamage <= 0) {
             return false;
         }
 
         target.setNoDamageTicks(0);
         target.setKiller(source);
-        target.setLastDamage(finalDamage);
+        target.setLastDamage(appliedDamage);
         target.setLastDamageCause(damageEvent);
-        target.setHealth(Math.max(0.0, target.getHealth() - finalDamage));
+        applyDamageThroughAbsorption(target, appliedDamage);
         return true;
+    }
+
+    private void applyDamageThroughAbsorption(LivingEntity target, double damage) {
+        double remainingDamage = damage;
+        double absorption = target.getAbsorptionAmount();
+
+        if (absorption > 0.0) {
+            double absorbedDamage = Math.min(absorption, remainingDamage);
+            target.setAbsorptionAmount(absorption - absorbedDamage);
+            remainingDamage -= absorbedDamage;
+        }
+
+        if (remainingDamage > 0.0) {
+            target.setHealth(Math.max(0.0, target.getHealth() - remainingDamage));
+        }
     }
 }

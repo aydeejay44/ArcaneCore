@@ -24,17 +24,27 @@ status-bar:
 breeze:
   cooldown-seconds: 25
   dash-distance:
-    level-3: 5.0
-    level-4: 8.0
+    # Target dash feel. The listener converts this into velocity with velocity-divisor.
+    level-3: 14.0
+    level-4: 21.0
   dash-damage: 4.0
-  hit-radius: 2.8
-  damage-window-ticks: 30
-  velocity-divisor: 4.0
-  min-y-velocity: 0.25
-  trail-duration-ticks: 10
+  hit-radius: 1.65
+  hit-step-spacing: 0.3
+  damage-window-ticks: 24
+  velocity-divisor: 5.5
+  min-y-velocity: 0.35
+  trail-duration-ticks: 14
+  wind-movement:
+    task-period-ticks: 2
+    climb-vertical-boost: 0.045
+    climb-max-up-velocity: 0.32
+    swim-horizontal-multiplier: 1.06
+    swim-max-horizontal-speed: 0.44
+    glide-horizontal-multiplier: 1.02
+    glide-max-horizontal-speed: 2.15
   knockback:
-    horizontal: 0.8
-    vertical: 0.25
+    horizontal: 1.0
+    vertical: 0.35
   particles:
     launch-cloud: 35
     launch-gust: 20
@@ -102,8 +112,8 @@ ember:
     level-3: 80
     level-4: 120
   damage:
-    level-3: 8.0
-    level-4: 10.0
+    level-3: 6.0
+    level-4: 8.0
   knockback:
     horizontal: 0.4
     vertical: 0.12
@@ -142,39 +152,45 @@ void:
       horizontal: 0.25
       vertical: 0.06
   particles:
-    passive-portal: 2
+    # Passive Void aura particle interval. 20 ticks = 1 second, 0 = disabled.
+    passive-interval-ticks: 80
+    passive-portal: 1
     passive-sculk-soul: 1
-    flight-launch-portal: 6
-    flight-launch-smoke: 3
-    flight-burst-portal: 100
-    breath-witch: 18
-    breath-reverse-portal: 10
-    breath-smoke: 6
+    flight-launch-portal: 3
+    flight-launch-smoke: 1
+    flight-burst-portal: 25
+    # Void Breath visual interval. Damage still uses void.breath.pulse-interval-ticks.
+    breath-interval-ticks: 20
+    breath-witch: 4
+    breath-reverse-portal: 3
+    breath-smoke: 1
 
 # Custom armor and weapon balance.
 custom-items:
+  # How often equipped custom armor shows passive particles. 20 ticks = 1 second, 0 = disabled.
+  particle-interval-ticks: 80
   heart-helmet:
     bonus-hearts: 5
     particles:
-      dust: 8
-      dust-size: 1.4
+      dust: 2
+      dust-size: 0.8
   resistance-chestplate:
     resistance-level: 1
     effect-duration-ticks: 60
     particles:
-      portal: 12
+      portal: 3
   haste-leggings:
     haste-level: 2
     effect-duration-ticks: 60
     particles:
-      happy-villager: 8
+      happy-villager: 2
   speed-boots:
     speed-level: 3
     effect-duration-ticks: 60
     particles:
-      cloud: 10
-      dust: 6
-      dust-size: 1.2
+      cloud: 2
+      dust: 1
+      dust-size: 0.8
   strength-axe:
     strength-level: 1
     effect-duration-ticks: 60

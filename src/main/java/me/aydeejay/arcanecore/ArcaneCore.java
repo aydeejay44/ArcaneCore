@@ -106,6 +106,7 @@ public class ArcaneCore extends JavaPlugin {
         register(luckListener);
         register(voidListener);
 
+        breezeListener.startPassiveTask();
         frostListener.startPassiveTask();
         luckListener.startPassiveTask();
         emberListener.startPassiveTask();
@@ -146,6 +147,9 @@ public class ArcaneCore extends JavaPlugin {
     public void onDisable() {
         if (statusBarManager != null) {
             statusBarManager.shutdown();
+        }
+        if (breezeListener != null) {
+            breezeListener.shutdown();
         }
         if (voidListener != null) {
             voidListener.shutdown();
@@ -204,11 +208,11 @@ public class ArcaneCore extends JavaPlugin {
 
     private void registerRecipes() {
         ShapedRecipe levelRecipe = new ShapedRecipe(key("arcane_level_item"), LevelItem.createItem());
-        levelRecipe.shape("DSD", "NKN", "DSD");
+        levelRecipe.shape("DKD", "NSN", "DKD");
         levelRecipe.setIngredient('D', Material.DIAMOND_BLOCK);
-        levelRecipe.setIngredient('S', Material.NETHER_STAR);
-        levelRecipe.setIngredient('N', Material.NETHERITE_INGOT);
         levelRecipe.setIngredient('K', Material.OMINOUS_TRIAL_KEY);
+        levelRecipe.setIngredient('N', Material.NETHERITE_INGOT);
+        levelRecipe.setIngredient('S', Material.WITHER_SKELETON_SKULL);
         addRecipe(levelRecipe, "arcane_level_item");
 
         ShapelessRecipe voidRecipe = new ShapelessRecipe(key("void_arcane"), VoidArcane.createItem());

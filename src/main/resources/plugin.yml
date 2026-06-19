@@ -61,7 +61,7 @@ commands:
     description: Withdraw one level
     usage: /withdrawlevel
   givehearthelmet:
-    description: Gives the Heart Helmet
+    description: Gives The Crown
     permission: arcanecore.admin
     permission-message: You do not have permission to use this command.
   giveresistancechestplate:

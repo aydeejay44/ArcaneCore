@@ -21,8 +21,10 @@ import org.bukkit.potion.PotionEffectType;
 public class CustomArmorListener implements Listener {
 
     private static final ArmorTrim FLOW_TRIM = new ArmorTrim(TrimMaterial.QUARTZ, TrimPattern.FLOW);
+    private static final int TASK_PERIOD_TICKS = 20;
 
     private final ArcaneCore plugin;
+    private int particleCooldownTicks;
 
     public CustomArmorListener(ArcaneCore plugin) {
         this.plugin = plugin;
@@ -33,6 +35,8 @@ public class CustomArmorListener implements Listener {
 
         plugin.getServer().getScheduler().runTaskTimer(plugin, () -> {
 
+            boolean spawnParticles = shouldSpawnParticles();
+
             for (Player player : plugin.getServer().getOnlinePlayers()) {
 
                 updateExistingArmorTrims(player);
@@ -42,20 +46,20 @@ public class CustomArmorListener implements Listener {
                 ItemStack leggings = player.getInventory().getLeggings();
                 ItemStack boots = player.getInventory().getBoots();
 
-                // HEART HELMET
+                // THE CROWN
 
-                if (HeartHelmet.isHeartHelmet(helmet)) {
+                if (spawnParticles && HeartHelmet.isHeartHelmet(helmet)) {
 
                     player.getWorld().spawnParticle(
                             Particle.DUST,
                             player.getLocation().add(0, 2.1, 0),
-                            ConfigValues.getInt(plugin, "custom-items.heart-helmet.particles.dust", 8, 0, 1000),
+                            ConfigValues.getInt(plugin, "custom-items.heart-helmet.particles.dust", 2, 0, 1000),
                             0.3,
                             0.3,
                             0.3,
                             new Particle.DustOptions(
                                     Color.RED,
-                                    ConfigValues.getFloat(plugin, "custom-items.heart-helmet.particles.dust-size", 1.4f, 0.1f, 10.0f)
+                                    ConfigValues.getFloat(plugin, "custom-items.heart-helmet.particles.dust-size", 0.8f, 0.1f, 10.0f)
                             )
                     );
 
@@ -75,15 +79,17 @@ public class CustomArmorListener implements Listener {
                         ));
                     }
 
-                    player.getWorld().spawnParticle(
-                            Particle.PORTAL,
-                            player.getLocation().add(0, 1, 0),
-                            ConfigValues.getInt(plugin, "custom-items.resistance-chestplate.particles.portal", 12, 0, 1000),
-                            0.35,
-                            0.6,
-                            0.35,
-                            0.03
-                    );
+                    if (spawnParticles) {
+                        player.getWorld().spawnParticle(
+                                Particle.PORTAL,
+                                player.getLocation().add(0, 1, 0),
+                                ConfigValues.getInt(plugin, "custom-items.resistance-chestplate.particles.portal", 3, 0, 1000),
+                                0.35,
+                                0.6,
+                                0.35,
+                                0.03
+                        );
+                    }
                 }
 
                 // HASTE LEGGINGS
@@ -100,15 +106,17 @@ public class CustomArmorListener implements Listener {
                         ));
                     }
 
-                    player.getWorld().spawnParticle(
-                            Particle.HAPPY_VILLAGER,
-                            player.getLocation().add(0, 0.7, 0),
-                            ConfigValues.getInt(plugin, "custom-items.haste-leggings.particles.happy-villager", 8, 0, 1000),
-                            0.35,
-                            0.4,
-                            0.35,
-                            0.03
-                    );
+                    if (spawnParticles) {
+                        player.getWorld().spawnParticle(
+                                Particle.HAPPY_VILLAGER,
+                                player.getLocation().add(0, 0.7, 0),
+                                ConfigValues.getInt(plugin, "custom-items.haste-leggings.particles.happy-villager", 2, 0, 1000),
+                                0.35,
+                                0.4,
+                                0.35,
+                                0.03
+                        );
+                    }
                 }
 
                 // SPEED BOOTS
@@ -125,38 +133,63 @@ public class CustomArmorListener implements Listener {
                         ));
                     }
 
-                    player.getWorld().spawnParticle(
-                            Particle.CLOUD,
-                            player.getLocation().add(0, 0.1, 0),
-                            ConfigValues.getInt(plugin, "custom-items.speed-boots.particles.cloud", 10, 0, 1000),
-                            0.25,
-                            0.05,
-                            0.25,
-                            0.02
-                    );
+                    if (spawnParticles) {
+                        player.getWorld().spawnParticle(
+                                Particle.CLOUD,
+                                player.getLocation().add(0, 0.1, 0),
+                                ConfigValues.getInt(plugin, "custom-items.speed-boots.particles.cloud", 2, 0, 1000),
+                                0.25,
+                                0.05,
+                                0.25,
+                                0.02
+                        );
 
-                    player.getWorld().spawnParticle(
-                            Particle.DUST,
-                            player.getLocation().add(0, 0.1, 0),
-                            ConfigValues.getInt(plugin, "custom-items.speed-boots.particles.dust", 6, 0, 1000),
-                            0.2,
-                            0.05,
-                            0.2,
-                            new Particle.DustOptions(
-                                    Color.AQUA,
-                                    ConfigValues.getFloat(plugin, "custom-items.speed-boots.particles.dust-size", 1.2f, 0.1f, 10.0f)
-                            )
-                    );
+                        player.getWorld().spawnParticle(
+                                Particle.DUST,
+                                player.getLocation().add(0, 0.1, 0),
+                                ConfigValues.getInt(plugin, "custom-items.speed-boots.particles.dust", 1, 0, 1000),
+                                0.2,
+                                0.05,
+                                0.2,
+                                new Particle.DustOptions(
+                                        Color.AQUA,
+                                        ConfigValues.getFloat(plugin, "custom-items.speed-boots.particles.dust-size", 0.8f, 0.1f, 10.0f)
+                                )
+                        );
+                    }
                 }
 
             }
 
-        }, 0L, 20L);
+        }, 0L, TASK_PERIOD_TICKS);
+    }
+
+    private boolean shouldSpawnParticles() {
+        int intervalTicks = ConfigValues.getInt(plugin, "custom-items.particle-interval-ticks", 80, 0, 12000);
+        if (intervalTicks <= 0) {
+            return false;
+        }
+
+        if (particleCooldownTicks > 0) {
+            particleCooldownTicks = Math.max(0, particleCooldownTicks - TASK_PERIOD_TICKS);
+            return false;
+        }
+
+        particleCooldownTicks = Math.max(TASK_PERIOD_TICKS, intervalTicks) - TASK_PERIOD_TICKS;
+        return true;
     }
 
     private void updateExistingArmorTrims(Player player) {
         for (ItemStack item : player.getInventory().getContents()) {
             if (!isCustomArmor(item) || !(item.getItemMeta() instanceof ArmorMeta meta)) {
+                continue;
+            }
+
+            if (HeartHelmet.isHeartHelmet(item)) {
+                if (meta.hasTrim()) {
+                    meta.setTrim(null);
+                    item.setItemMeta(meta);
+                }
                 continue;
             }
 
